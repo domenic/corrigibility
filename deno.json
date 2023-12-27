@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "memoizy": "https://deno.land/x/memoizy@1.0.0/mod.ts"
+  },
+  "fmt": {
+    "lineWidth": 100
+  }
+}
