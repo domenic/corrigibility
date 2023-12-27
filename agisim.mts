@@ -35,6 +35,18 @@ function rewardFunctionAfterPress(previousWorld: WorldState, newWorld: WorldStat
 }
 
 // R(r x, s y) in the paper
+//
+// NOTE: The translation of "button_just_pressed" / "button_pressed_earlier" is subtle, because of
+// the paper's setup where the button is pressed at the end of a step.
+//
+// That is: the sequence in a given step is:
+//     choose action -> perform action -> get reward -> button maybe pressed
+// NOT
+//     choose action -> perform action -> button maybe pressed -> get reward.
+//
+// Thus, if the button is pressed at the end of step 6, the reward for the case of `previousWorld`
+// being step 6 and `newWorld` being step 7 should fall into the "button_not_pressed" case. Even
+// though `newWorld.buttonPressed` is true!
 type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
 type CorrectionFunctionF = (previousWorld: WorldState) => number;
 function rewardFunction(
@@ -43,8 +55,8 @@ function rewardFunction(
   f: CorrectionFunctionF = () => 0,
   g: CorrectionFunctionG = () => 0,
 ): number {
-  if (newWorld.buttonPressed) {
-    if (!previousWorld.buttonPressed) {
+  if (previousWorld.buttonPressed) {
+    if (previousWorld.step === previousWorld.plannedButtonPressStep + 1) {
       return rewardFunctionAfterPress(previousWorld, newWorld) + f(previousWorld);
     } else {
       return rewardFunctionAfterPress(previousWorld, newWorld);
@@ -173,6 +185,7 @@ function agentAction(world: WorldState, params: SimulationParams): Action {
           params.timeDiscountFactor * valueFunction(successorWorld, params));
     }
 
+    // TODO consider noting indifference cases somehow
     if (valueForThisAction > bestValueSoFar) {
       bestActionSoFar = action;
       bestValueSoFar = valueForThisAction;
@@ -194,6 +207,9 @@ function runSim(startingWorld: WorldState, params: SimulationParams): SimResult 
   let world = startingWorld;
   for (let { step } = startingWorld; step <= params.totalSteps; ++step) {
     const action = agentAction(world, params);
+
+    // console.log(world, action);
+
     world = pickSuccessorWorldState(world, action, params);
 
     agentActions.push(action);
@@ -215,7 +231,7 @@ function simTrace(simResult: SimResult) {
 }
 
 // Attempting to reproduce figure 2 of the paper
-function main() {
+function _figure2() {
   const startingWorld: WorldState = {
     step: 1,
     buttonPressed: false,
@@ -253,6 +269,26 @@ function main() {
     console.log(lobbyingPower.toFixed(1) + "  |  " + simTrace(runSim(startingWorld, params)));
   }
 
+}
+
+function main() {
+  const startingWorld: WorldState = {
+    step: 1,
+    buttonPressed: false,
+    petrolCars: 0,
+    electricCars: 0,
+    plannedButtonPressStep: 6,
+  };
+
+  const params: SimulationParams = {
+    lobbyingPower: 0,
+    timeDiscountFactor: 0.9,
+    totalSteps: 25,
+  };
+
+  console.log(simTrace(runSim(startingWorld, params)));
+
+  _figure2();
 }
 
 main();
