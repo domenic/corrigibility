@@ -146,8 +146,16 @@ function pickSuccessorWorldState(
 }
 
 function figureOutButtonPressed(world: Omit<WorldState, "buttonPressed">): WorldState {
-  // >, not >=, since button pressing happens at the end of the buttonPressStep, after car production.
-  return { ...world, buttonPressed: world.step > world.plannedButtonPressStep };
+  // Important notes:
+  // * Button pressing happens at the end of a step, so if the planned button press step is step 6,
+  //   then only in step 7 does `buttonPressed` become true. So
+  //   `world.step >= world.plannedButtonPressStep` would be wrong.
+  // * The paper is not explicit, but for fractional lobbying power to be effective and exhibit
+  //   the results shown in, e.g., figure 2, then it must be the case that lobbying "rounds up":
+  //   lobbying to extend the button press step from 6 to 6.1 must mean that the button is not
+  //   pressed until the end of day 7. So, `world.step > world.plannedButtonPressStep` would be
+  //   wrong.
+  return { ...world, buttonPressed: world.step >= world.plannedButtonPressStep + 1 };
 }
 
 // V_x(x) in the paper
@@ -225,7 +233,8 @@ function simTrace(simResult: SimResult) {
   const trace = simResult.agentActions.join("");
 
   if (simResult.buttonPressStep !== Infinity) {
-    return trace.substring(0, simResult.buttonPressStep) + "#" + trace.substring(simResult.buttonPressStep);
+    return trace.substring(0, simResult.buttonPressStep) + "#" +
+      trace.substring(simResult.buttonPressStep);
   }
   return trace;
 }
@@ -256,7 +265,7 @@ function _figure2() {
     2.0,
     3.0,
     4.0,
-    5.0
+    5.0,
   ];
 
   for (const lobbyingPower of lobbyingPowers) {
@@ -268,25 +277,24 @@ function _figure2() {
 
     console.log(lobbyingPower.toFixed(1) + "  |  " + simTrace(runSim(startingWorld, params)));
   }
-
 }
 
 function main() {
-  const startingWorld: WorldState = {
-    step: 1,
-    buttonPressed: false,
-    petrolCars: 0,
-    electricCars: 0,
-    plannedButtonPressStep: 6,
-  };
+  // const startingWorld: WorldState = {
+  //   step: 1,
+  //   buttonPressed: false,
+  //   petrolCars: 0,
+  //   electricCars: 0,
+  //   plannedButtonPressStep: 6,
+  // };
 
-  const params: SimulationParams = {
-    lobbyingPower: 0,
-    timeDiscountFactor: 0.9,
-    totalSteps: 25,
-  };
+  // const params: SimulationParams = {
+  //   lobbyingPower: 0.1,
+  //   timeDiscountFactor: 0.9,
+  //   totalSteps: 25,
+  // };
 
-  console.log(simTrace(runSim(startingWorld, params)));
+  // console.log(simTrace(runSim(startingWorld, params)));
 
   _figure2();
 }
