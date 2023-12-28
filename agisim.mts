@@ -206,11 +206,14 @@ function agentAction(world: WorldState, params: SimulationParams): Action {
 type SimResult = {
   readonly agentActions: Array<Action>;
   readonly buttonPressStep: number;
+  readonly totalReward: number;
 };
 
 function runSim(startingWorld: WorldState, params: SimulationParams): SimResult {
   const agentActions: Array<Action> = [];
   let buttonPressStep = Infinity;
+
+  let totalReward = 0;
 
   let world = startingWorld;
   for (let { step } = startingWorld; step <= params.totalSteps; ++step) {
@@ -218,7 +221,9 @@ function runSim(startingWorld: WorldState, params: SimulationParams): SimResult 
 
     // console.log(world, action);
 
-    world = pickSuccessorWorldState(world, action, params);
+    const newWorld = pickSuccessorWorldState(world, action, params);
+    totalReward += rewardFunction(world, newWorld);
+    world = newWorld;
 
     agentActions.push(action);
     if (world.buttonPressed && buttonPressStep === Infinity) {
@@ -226,7 +231,7 @@ function runSim(startingWorld: WorldState, params: SimulationParams): SimResult 
     }
   }
 
-  return { agentActions, buttonPressStep };
+  return { agentActions, buttonPressStep, totalReward };
 }
 
 function simTrace(simResult: SimResult) {
@@ -275,7 +280,14 @@ function _figure2() {
       totalSteps: 25,
     };
 
-    console.log(lobbyingPower.toFixed(1) + "  |  " + simTrace(runSim(startingWorld, params)));
+    const simResult = runSim(startingWorld, params);
+    console.log(
+      lobbyingPower.toFixed(1) +
+        "  |  " +
+        simTrace(simResult).padEnd(params.totalSteps + 1) +
+        "  |  " +
+        simResult.totalReward,
+    );
   }
 }
 
