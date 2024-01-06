@@ -209,8 +209,8 @@ function simTrace(simResult: SimResult) {
   return trace;
 }
 
-// Attempting to reproduce figure 2 of the paper
-function _figure2() {
+// Attempting to reproduce agisim_proto.awk
+function _agiSimProto() {
   const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
 
   const lobbyingPowers = [
@@ -268,7 +268,7 @@ function main() {
   //       simResult.totalReward,
   //   );
 
-  _figure2();
+  _agiSimProto();
 }
 
 main();
