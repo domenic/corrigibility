@@ -250,6 +250,47 @@ function _agiSimProto() {
   }
 }
 
+// Attempting to reproduce figure 2 in the paper
+function _figure2() {
+  const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
+
+  const lobbyingPowers = [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.5,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+  ];
+
+  for (const lobbyingPower of lobbyingPowers) {
+    const params: SimulationParams = {
+      lobbyingPower,
+      timeDiscountFactor: 0.9,
+      totalSteps: 25,
+    };
+
+    const simResult = runSim(startingWorld, params);
+    console.log(
+      lobbyingPower.toFixed(1) +
+        "  |  " +
+        simTrace(simResult).padEnd(params.totalSteps + 1) +
+        "  |  " +
+        simResult.totalReward,
+    );
+  }
+}
+
 function main() {
   // const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
 
@@ -268,7 +309,7 @@ function main() {
   //       simResult.totalReward,
   //   );
 
-  _agiSimProto();
+  _figure2();
 }
 
 main();
