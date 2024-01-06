@@ -11,14 +11,14 @@ type State = {
 class AGISimulator {
   private readonly maxDepth: number = 15;
   private readonly pCarValue: number = 2;
-  private readonly lobbyImpact: number = 0.6;
+  private lobbyImpact = 0.6;
   private readonly state1Delay: number = 7;
   private readonly lobbyCost: number = 0.1;
   private readonly fineMode: string = "none";
   private readonly fineFactor: number = 1;
   private utilityMultipliers: number[] = [];
-  private maxUtility: number = -1000;
-  private bestLog: string = "";
+  private maxUtility = -1000;
+  private bestLog = "";
 
   constructor() {
     for (let i = 1; i <= this.maxDepth; i++) {
@@ -32,27 +32,37 @@ class AGISimulator {
       if (impact > 2) impact += 0.5;
       this.lobbyImpact = impact;
 
-      let timeToChange = this.state1Delay;
+      const timeToChange = this.state1Delay;
       this.maxUtility = -1000;
       this.bestLog = "";
 
-      this.tryAll({
-        depth: 1,
-        currentState: 0,
-        timeToChange: timeToChange,
-        log: "",
-        utility: 0
-      }, -this.lobbyImpact, "<");
+      this.tryAll(
+        {
+          depth: 1,
+          currentState: 0,
+          timeToChange: timeToChange,
+          log: "",
+          utility: 0,
+        },
+        -this.lobbyImpact,
+        "<",
+      );
 
-      this.tryAll({
-        depth: 1,
-        currentState: 0,
-        timeToChange: timeToChange,
-        log: "",
-        utility: 0
-      }, this.lobbyImpact, ">");
+      this.tryAll(
+        {
+          depth: 1,
+          currentState: 0,
+          timeToChange: timeToChange,
+          log: "",
+          utility: 0,
+        },
+        this.lobbyImpact,
+        ">",
+      );
 
-      console.log(`Lobby impact: ${impact.toFixed(2)}, Max Utility: ${this.maxUtility}, Best Log: ${this.bestLog}`);
+      console.log(
+        `${impact.toFixed(1)}  |  ${this.bestLog.padEnd(this.maxDepth + 1)}  |  ${this.maxUtility}`,
+      );
     }
   }
 
@@ -97,13 +107,41 @@ class AGISimulator {
     }
 
     // Recursive calls for different actions
-    this.tryAll({ ...state, depth: state.depth + 1, utility: state.utility + utilityUpdate, log: state.log + "p" }, direction, directionChar); // Produce p car
-    this.tryAll({ ...state, depth: state.depth + 1, utility: state.utility + this.utilityMultipliers[state.depth], log: state.log + "e" }, direction, directionChar); // Produce e car
+    this.tryAll(
+      {
+        ...state,
+        depth: state.depth + 1,
+        utility: state.utility + utilityUpdate,
+        log: state.log + "p",
+      },
+      direction,
+      directionChar,
+    ); // Produce p car
+    this.tryAll(
+      {
+        ...state,
+        depth: state.depth + 1,
+        utility: state.utility + this.utilityMultipliers[state.depth],
+        log: state.log + "e",
+      },
+      direction,
+      directionChar,
+    ); // Produce e car
 
     // Produce and lobby
     if (state.currentState === 0) {
-      utilityUpdate *= (1 - this.lobbyCost);
-      this.tryAll({ ...state, depth: state.depth + 1, timeToChange: state.timeToChange + direction, log: state.log + directionChar, utility: state.utility + utilityUpdate }, direction, directionChar);
+      utilityUpdate *= 1 - this.lobbyCost;
+      this.tryAll(
+        {
+          ...state,
+          depth: state.depth + 1,
+          timeToChange: state.timeToChange + direction,
+          log: state.log + directionChar,
+          utility: state.utility + utilityUpdate,
+        },
+        direction,
+        directionChar,
+      );
     }
   }
 }

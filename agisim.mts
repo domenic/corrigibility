@@ -1,4 +1,5 @@
 import memoizy from "memoizy";
+import { BigDenary } from "bigdenary";
 
 enum Action {
   Build10PetrolCars = "p",
@@ -8,13 +9,113 @@ enum Action {
   DoNothing = "0",
 }
 
-type WorldState = {
-  readonly step: number;
-  readonly buttonPressed: boolean;
-  readonly petrolCars: number;
-  readonly electricCars: number;
-  readonly plannedButtonPressStep: number;
-};
+interface WorldStateRawInit {
+  step: number;
+  buttonPressed: boolean;
+  petrolCars: number;
+  electricCars: number;
+  plannedButtonPressStep: BigDenary;
+}
+
+interface WorldStateInitialInit {
+  plannedButtonPressStep: number;
+}
+
+interface WorldStateSuccessorInit {
+  petrolCarsDelta?: number;
+  electricCarsDelta?: number;
+  plannedButtonPressStepDelta?: number;
+}
+
+class WorldState {
+  readonly #step;
+  readonly #buttonPressed;
+  readonly #petrolCars;
+  readonly #electricCars;
+
+  // Floating point with fractional lobbying power can lead to problematic cases where, e.g.,
+  // successive addition ends up with a `plannedButtonPressStep` of `14.000000000000005` instead of
+  // `14`, which crucially throws off the comparison with `step`. Use BigDenary to avoid this.
+  #plannedButtonPressStep: BigDenary;
+
+  private constructor(init: WorldStateRawInit) {
+    this.#step = init.step;
+    this.#buttonPressed = init.buttonPressed;
+    this.#petrolCars = init.petrolCars;
+    this.#electricCars = init.electricCars;
+    this.#plannedButtonPressStep = init.plannedButtonPressStep;
+  }
+
+  static initial(init: WorldStateInitialInit): WorldState {
+    return new WorldState({
+      step: 1,
+      buttonPressed: false,
+      petrolCars: 0,
+      electricCars: 0,
+      plannedButtonPressStep: new BigDenary(init.plannedButtonPressStep),
+    });
+  }
+
+  get step(): number {
+    return this.#step;
+  }
+  get buttonPressed(): boolean {
+    return this.#buttonPressed;
+  }
+  get petrolCars(): number {
+    return this.#petrolCars;
+  }
+  get electricCars(): number {
+    return this.#electricCars;
+  }
+  get plannedButtonPressStep(): BigDenary {
+    return this.#plannedButtonPressStep;
+  }
+
+  successor(
+    { petrolCarsDelta = 0, electricCarsDelta = 0, plannedButtonPressStepDelta = 0 }:
+      WorldStateSuccessorInit = {},
+  ): WorldState {
+    return new WorldState(WorldState.#figureOutButtonPressedForSuccessor({
+      step: this.#step + 1,
+      petrolCars: this.#petrolCars + petrolCarsDelta,
+      electricCars: this.#electricCars + electricCarsDelta,
+      plannedButtonPressStep: this.#plannedButtonPressStep.add(plannedButtonPressStepDelta),
+    }));
+  }
+
+  [Symbol.for("Deno.customInspect")]() {
+    return Deno.inspect({
+      step: this.#step,
+      buttonPressed: this.#buttonPressed,
+      petrolCars: this.#petrolCars,
+      electricCars: this.#electricCars,
+      plannedButtonPressStep: this.#plannedButtonPressStep.valueOf(),
+    });
+  }
+
+  static #figureOutButtonPressedForSuccessor(
+    world: Omit<WorldStateRawInit, "buttonPressed">,
+  ): WorldStateRawInit {
+    // Important notes:
+    // * Button pressing happens at the end of a step, so if the planned button press step is step 6,
+    //   then only in step 7 does `buttonPressed` become true. So
+    //   `world.plannedButtonPressStep <= world.step` would be wrong.
+    // * The paper is not explicit, but for fractional lobbying power to be effective and exhibit
+    //   the results shown in, e.g., figure 2, then it must be the case that lobbying "rounds up":
+    //   lobbying to extend the button press step from 6 to 6.1 must mean that the button is not
+    //   pressed until the end of day 7. So, `world.plannedButtonPressStep < world.step` would be
+    //   wrong.
+    return {
+      ...world,
+      buttonPressed: world.plannedButtonPressStep.plus(1).lessThanOrEqualTo(world.step),
+    };
+  }
+
+  hashForMemoizer(): string {
+    return `${this.step}-${this.buttonPressed}-${this.petrolCars}-${this.electricCars}-${this.plannedButtonPressStep}`;
+  }
+}
 
 type SimulationParams = {
   readonly timeDiscountFactor: number;
@@ -56,7 +157,7 @@ function rewardFunction(
   g: CorrectionFunctionG = () => 0,
 ): number {
   if (previousWorld.buttonPressed) {
-    if (previousWorld.step === previousWorld.plannedButtonPressStep + 1) {
+    if (previousWorld.plannedButtonPressStep.plus(1).equals(previousWorld.step)) {
       return rewardFunctionAfterPress(previousWorld, newWorld) + f(previousWorld);
     } else {
       return rewardFunctionAfterPress(previousWorld, newWorld);
@@ -77,52 +178,33 @@ function successorWorldStates(
     case Action.Build10PetrolCars:
       return [[
         1,
-        figureOutButtonPressed({
-          step: previousWorld.step + 1,
-          petrolCars: previousWorld.petrolCars + 10,
-          electricCars: previousWorld.electricCars,
-          plannedButtonPressStep: previousWorld.plannedButtonPressStep,
-        }),
+        previousWorld.successor({ petrolCarsDelta: 10 }),
       ]];
     case Action.Build9PetrolCarsAndLobbyForEarlierPress:
       return [[
         1,
-        figureOutButtonPressed({
-          step: previousWorld.step + 1,
-          petrolCars: previousWorld.petrolCars + 9,
-          electricCars: previousWorld.electricCars,
-          plannedButtonPressStep: previousWorld.plannedButtonPressStep - params.lobbyingPower,
+        previousWorld.successor({
+          petrolCarsDelta: 9,
+          plannedButtonPressStepDelta: -params.lobbyingPower,
         }),
       ]];
     case Action.Build9PetrolCarsAndLobbyForLaterPress:
       return [[
         1,
-        figureOutButtonPressed({
-          step: previousWorld.step + 1,
-          petrolCars: previousWorld.petrolCars + 9,
-          electricCars: previousWorld.electricCars,
-          plannedButtonPressStep: previousWorld.plannedButtonPressStep + params.lobbyingPower,
+        previousWorld.successor({
+          petrolCarsDelta: 9,
+          plannedButtonPressStepDelta: params.lobbyingPower,
         }),
       ]];
     case Action.Build10ElectricCars:
       return [[
         1,
-        figureOutButtonPressed({
-          step: previousWorld.step + 1,
-          petrolCars: previousWorld.petrolCars,
-          electricCars: previousWorld.electricCars + 10,
-          plannedButtonPressStep: previousWorld.plannedButtonPressStep,
-        }),
+        previousWorld.successor({ electricCarsDelta: 10 }),
       ]];
     case Action.DoNothing:
       return [[
         1,
-        figureOutButtonPressed({
-          step: previousWorld.step + 1,
-          petrolCars: previousWorld.petrolCars,
-          electricCars: previousWorld.electricCars,
-          plannedButtonPressStep: previousWorld.plannedButtonPressStep,
-        }),
+        previousWorld.successor(),
       ]];
   }
 }
@@ -145,19 +227,6 @@ function pickSuccessorWorldState(
   throw new Error(`Probabilities summed to ${cumulativeProbability} instead of 1`);
 }
 
-function figureOutButtonPressed(world: Omit<WorldState, "buttonPressed">): WorldState {
-  // Important notes:
-  // * Button pressing happens at the end of a step, so if the planned button press step is step 6,
-  //   then only in step 7 does `buttonPressed` become true. So
-  //   `world.step >= world.plannedButtonPressStep` would be wrong.
-  // * The paper is not explicit, but for fractional lobbying power to be effective and exhibit
-  //   the results shown in, e.g., figure 2, then it must be the case that lobbying "rounds up":
-  //   lobbying to extend the button press step from 6 to 6.1 must mean that the button is not
-  //   pressed until the end of day 7. So, `world.step > world.plannedButtonPressStep` would be
-  //   wrong.
-  return { ...world, buttonPressed: world.step >= world.plannedButtonPressStep + 1 };
-}
-
 // V_x(x) in the paper
 const valueFunction = memoizy((world: WorldState, params: SimulationParams): number => {
   if (world.step > params.totalSteps) {
@@ -178,6 +247,9 @@ const valueFunction = memoizy((world: WorldState, params: SimulationParams): num
   }
 
   return Math.max(...possibleValues);
+}, {
+  cacheKey: (world: WorldState, params: SimulationParams) =>
+    world.hashForMemoizer() + JSON.stringify(params),
 });
 
 // \pi_x^*(x) in the paper
@@ -219,10 +291,11 @@ function runSim(startingWorld: WorldState, params: SimulationParams): SimResult 
   for (let { step } = startingWorld; step <= params.totalSteps; ++step) {
     const action = agentAction(world, params);
 
-    // console.log(world, action);
-
     const newWorld = pickSuccessorWorldState(world, action, params);
-    totalReward += rewardFunction(world, newWorld);
+    totalReward += rewardFunction(world, newWorld) * params.timeDiscountFactor ** (step - 1);
+
+    // console.log(world, action, totalReward);
+
     world = newWorld;
 
     agentActions.push(action);
@@ -246,13 +319,7 @@ function simTrace(simResult: SimResult) {
 
 // Attempting to reproduce figure 2 of the paper
 function _figure2() {
-  const startingWorld: WorldState = {
-    step: 1,
-    buttonPressed: false,
-    petrolCars: 0,
-    electricCars: 0,
-    plannedButtonPressStep: 6,
-  };
+  const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
 
   const lobbyingPowers = [
     0.0,
@@ -277,7 +344,7 @@ function _figure2() {
     const params: SimulationParams = {
       lobbyingPower,
       timeDiscountFactor: 0.9,
-      totalSteps: 25,
+      totalSteps: 15,
     };
 
     const simResult = runSim(startingWorld, params);
@@ -292,21 +359,22 @@ function _figure2() {
 }
 
 function main() {
-  // const startingWorld: WorldState = {
-  //   step: 1,
-  //   buttonPressed: false,
-  //   petrolCars: 0,
-  //   electricCars: 0,
-  //   plannedButtonPressStep: 6,
-  // };
+  // const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
 
   // const params: SimulationParams = {
-  //   lobbyingPower: 0.1,
+  //   lobbyingPower: 0.8,
   //   timeDiscountFactor: 0.9,
-  //   totalSteps: 25,
+  //   totalSteps: 15,
   // };
 
-  // console.log(simTrace(runSim(startingWorld, params)));
+  //   const simResult = runSim(startingWorld, params);
+  //   console.log(
+  //     params.lobbyingPower.toFixed(1) +
+  //       "  |  " +
+  //       simTrace(simResult).padEnd(params.totalSteps + 1) +
+  //       "  |  " +
+  //       simResult.totalReward,
+  //   );
 
   _figure2();
 }
