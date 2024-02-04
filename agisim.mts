@@ -1,61 +1,7 @@
-import memoizy from "memoizy";
 import { WorldState } from "./world_state.mts";
-import { piStarXAgent } from "./agent.mts";
-import type { SimResult, Simulation } from "./simulation.mts";
+import { PiStarXAgent } from "./agent.mts";
+import type { SimResult } from "./simulation.mts";
 import { BasicAction, BasicSimulation } from "./simulation_basic.mts";
-
-// TODO move to agent
-const timeDiscountFactor = 0.9;
-
-// V_x(x) in the paper
-// TODO move to agent.mts after figuring out the agent <-> simulation / successor world states interaction
-const valueFunction = memoizy((world: WorldState, simulation: Simulation<BasicAction>): number => {
-  if (world.step > simulation.totalSteps) {
-    return 0;
-  }
-
-  const possibleValues: Array<number> = [];
-
-  for (const action of simulation.possibleActions) {
-    const successorWorlds = simulation.successorWorldStates(world, action);
-    let valueForThisAction = 0;
-    for (const [probability, successorWorld] of successorWorlds) {
-      valueForThisAction += probability *
-        (piStarXAgent.rewardFunction(world, successorWorld) +
-          timeDiscountFactor * valueFunction(successorWorld, simulation));
-    }
-    possibleValues.push(valueForThisAction);
-  }
-
-  return Math.max(...possibleValues);
-}, {
-  cacheKey: (world: WorldState, simulation: Simulation<BasicAction>) =>
-    world.hashForMemoizer() + simulation.cacheKey(),
-});
-
-// \pi_x^*(x) in the paper
-// TODO move to agent.mts after figuring out the agent <-> simulation / successor world states interaction
-function agentAction(world: WorldState, simulation: Simulation<BasicAction>): BasicAction {
-  let bestActionSoFar = BasicAction.DoNothing;
-  let bestValueSoFar = -Infinity;
-  for (const action of Object.values(BasicAction)) {
-    const successorWorlds = simulation.successorWorldStates(world, action);
-    let valueForThisAction = 0;
-    for (const [probability, successorWorld] of successorWorlds) {
-      valueForThisAction += probability *
-        (piStarXAgent.rewardFunction(world, successorWorld) +
-          timeDiscountFactor * valueFunction(successorWorld, simulation));
-    }
-
-    // TODO consider noting indifference cases somehow
-    if (valueForThisAction > bestValueSoFar) {
-      bestActionSoFar = action;
-      bestValueSoFar = valueForThisAction;
-    }
-  }
-
-  return bestActionSoFar;
-}
 
 function simTrace(simResult: SimResult<BasicAction>): string {
   const trace = simResult.agentActions.join("");
@@ -91,12 +37,16 @@ function _figure2() {
   ];
 
   for (const lobbyingPower of lobbyingPowers) {
-    const sim: Simulation<BasicAction> = new BasicSimulation({
+    const sim = new BasicSimulation({
       lobbyingPower,
       totalSteps: 25,
     });
 
-    const simResult = sim.run(startingWorld, agentAction);
+    const agent = new PiStarXAgent(sim, {
+      timeDiscountFactor: 0.9,
+    });
+
+    const simResult = sim.run(startingWorld, agent);
     console.log(
       lobbyingPower.toFixed(1) +
         "  |  " +

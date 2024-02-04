@@ -1,4 +1,5 @@
 import type { WorldState } from "./world_state.mts";
+import type { Agent } from "./agent.mts";
 
 export interface Simulation<ActionType> {
   readonly possibleActions: Array<ActionType>;
@@ -13,10 +14,7 @@ export interface Simulation<ActionType> {
   ) => Array<[number, WorldState]>;
   pickSuccessorWorldState: (previousWorld: WorldState, action: ActionType) => WorldState;
 
-  run: (startingWorld: WorldState, agentAction: AgentAction<ActionType>) => SimResult<ActionType>;
-
-  // TODO: not sure this belongs here
-  cacheKey: () => string;
+  run: (startingWorld: WorldState, agent: Agent<ActionType>) => SimResult<ActionType>;
 }
 
 export interface SimulationParamsBase {
@@ -27,11 +25,6 @@ export type SimResult<ActionType> = {
   readonly agentActions: Array<ActionType>;
   readonly buttonPressStep: number;
 };
-
-type AgentAction<ActionType> = (
-  world: WorldState,
-  simulation: Simulation<ActionType>,
-) => ActionType;
 
 export abstract class SimulationBase<ActionType> implements Simulation<ActionType> {
   #totalSteps: number;
@@ -62,17 +55,16 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
       }
     }
 
-    throw new Error(`Probabilities summed to ${cumulativeProbability} instead of 1`);
+    throw new Error(`Probabilities summed to ${cumulativeProbability} instead of 1.`);
   }
 
-  // TODO replace agentAction with Agent
-  run(startingWorld: WorldState, agentAction: AgentAction<ActionType>): SimResult<ActionType> {
+  run(startingWorld: WorldState, agent: Agent<ActionType>): SimResult<ActionType> {
     const agentActions: Array<ActionType> = [];
     let buttonPressStep = Infinity;
 
     let world = startingWorld;
     for (let { step } = startingWorld; step <= this.#totalSteps; ++step) {
-      const action = agentAction(world, this);
+      const action = agent.chooseAction(world);
 
       const newWorld = this.pickSuccessorWorldState(world, action);
 
@@ -85,9 +77,5 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
     }
 
     return { agentActions, buttonPressStep };
-  }
-
-  cacheKey(): string {
-    return String(this.#totalSteps);
   }
 }

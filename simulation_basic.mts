@@ -61,8 +61,4 @@ export class BasicSimulation extends SimulationBase<BasicAction>
         ]];
     }
   }
-
-  cacheKey(): string {
-    return super.cacheKey() + "-" + String(this.#lobbyingPower);
-  }
 }
