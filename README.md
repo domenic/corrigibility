@@ -56,3 +56,23 @@ This repository's `agisim.mts` produces the correct trace for a 15-step simulati
 
 (TODO update the above paragraph as `agisim.mts` evolves to document the correct output format and
 input.)
+
+## TODO
+
+- Continue implementing more parts of the paper
+- Create Agent and World/Simulation abstractions?
+  - World:
+    - successorWorldStates, pickSuccessorWorldState, maybe the list of possible Actions
+    - Probably simulationParams
+    - Maybe simResult, runSim, simTrace
+    - Although simResult / simTrace are their own tiny little piece which could be nice?
+  - Agent:
+    - valueFunction
+    - rewardFunction and its pieces
+    - agentAction
+    - Agent seems like a nice place to start, since it's stateless.
+      - Although tests for agentAction are a bit interesting.
+  - totalUtility tracking is a bit sketchy; it was added as a debugging aid and doesn't correspond
+    well to anything in the paper. (E.g. does it deal well with probabilities??) Consider revamping
+    it.
+- Performance is slow for 25-deep. Can we memoize more or faster, or do other optimizations?

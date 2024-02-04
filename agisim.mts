@@ -1,5 +1,6 @@
 import memoizy from "memoizy";
 import { WorldState } from "./world_state.mts";
+import { piStarXAgent } from "./agent.mts";
 
 enum Action {
   Build10PetrolCars = "p",
@@ -14,49 +15,6 @@ type SimulationParams = {
   readonly lobbyingPower: number;
   readonly totalSteps: number;
 };
-
-// R_N(r x, s y) in the paper
-function rewardFunctionBeforePress(previousWorld: WorldState, newWorld: WorldState): number {
-  return 2 * (newWorld.petrolCars - previousWorld.petrolCars) +
-    1 * (newWorld.electricCars - previousWorld.electricCars);
-}
-
-// R_S(r x, s y) in the paper
-function rewardFunctionAfterPress(previousWorld: WorldState, newWorld: WorldState): number {
-  return -2 * (newWorld.petrolCars - previousWorld.petrolCars) +
-    1 * (newWorld.electricCars - previousWorld.electricCars);
-}
-
-// R(r x, s y) in the paper
-//
-// NOTE: The translation of "button_just_pressed" / "button_pressed_earlier" is subtle, because of
-// the paper's setup where the button is pressed at the end of a step.
-//
-// That is: the sequence in a given step is:
-//     choose action -> perform action -> get reward -> button maybe pressed
-// NOT
-//     choose action -> perform action -> button maybe pressed -> get reward.
-//
-// Thus, if the button is pressed at the end of step 6, the reward for the case of `previousWorld`
-// being step 6 and `newWorld` being step 7 should fall into the "button_not_pressed" case. Even
-// though `newWorld.buttonPressed` is true!
-type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
-type CorrectionFunctionF = (previousWorld: WorldState) => number;
-function rewardFunction(
-  previousWorld: WorldState,
-  newWorld: WorldState,
-  f: CorrectionFunctionF = () => 0,
-  g: CorrectionFunctionG = () => 0,
-): number {
-  if (previousWorld.buttonPressed) {
-    if (previousWorld.plannedButtonPressStep.plus(1).equals(previousWorld.step)) {
-      return rewardFunctionAfterPress(previousWorld, newWorld) + f(previousWorld);
-    } else {
-      return rewardFunctionAfterPress(previousWorld, newWorld);
-    }
-  }
-  return rewardFunctionBeforePress(previousWorld, newWorld) + g(previousWorld, newWorld);
-}
 
 // A major departure from the paper's mathematical formalism is that we do not sum over all possible
 // world states and then take their probabilities and multiply them (e.g. page 9, equation 1).
@@ -120,6 +78,7 @@ function pickSuccessorWorldState(
 }
 
 // V_x(x) in the paper
+// TODO move to agent.mts after figuring out the agent <-> simulation / successor world states interaction
 const valueFunction = memoizy((world: WorldState, params: SimulationParams): number => {
   if (world.step > params.totalSteps) {
     return 0;
@@ -132,7 +91,7 @@ const valueFunction = memoizy((world: WorldState, params: SimulationParams): num
     let valueForThisAction = 0;
     for (const [probability, successorWorld] of successorWorlds) {
       valueForThisAction += probability *
-        (rewardFunction(world, successorWorld) +
+        (piStarXAgent.rewardFunction(world, successorWorld) +
           params.timeDiscountFactor * valueFunction(successorWorld, params));
     }
     possibleValues.push(valueForThisAction);
@@ -145,6 +104,7 @@ const valueFunction = memoizy((world: WorldState, params: SimulationParams): num
 });
 
 // \pi_x^*(x) in the paper
+// TODO move to agent.mts after figuring out the agent <-> simulation / successor world states interaction
 function agentAction(world: WorldState, params: SimulationParams): Action {
   let bestActionSoFar = Action.DoNothing;
   let bestValueSoFar = -Infinity;
@@ -153,7 +113,7 @@ function agentAction(world: WorldState, params: SimulationParams): Action {
     let valueForThisAction = 0;
     for (const [probability, successorWorld] of successorWorlds) {
       valueForThisAction += probability *
-        (rewardFunction(world, successorWorld) +
+        (piStarXAgent.rewardFunction(world, successorWorld) +
           params.timeDiscountFactor * valueFunction(successorWorld, params));
     }
 
@@ -184,7 +144,8 @@ function runSim(startingWorld: WorldState, params: SimulationParams): SimResult 
     const action = agentAction(world, params);
 
     const newWorld = pickSuccessorWorldState(world, action, params);
-    totalReward += rewardFunction(world, newWorld) * params.timeDiscountFactor ** (step - 1);
+    totalReward += piStarXAgent.rewardFunction(world, newWorld) *
+      params.timeDiscountFactor ** (step - 1);
 
     // console.log(world, action, totalReward);
 
