@@ -49,7 +49,7 @@ class ParameterizedPiXAgent<ActionType> {
   // though `newWorld.buttonPressed` is true!
   rewardFunction(previousWorld: WorldState, newWorld: WorldState): number {
     if (previousWorld.buttonPressed) {
-      if (previousWorld.plannedButtonPressStep.plus(1).equals(previousWorld.step)) {
+      if (previousWorld.plannedButtonPressStep + 1 === previousWorld.step) {
         return rewardFunctionAfterPress(previousWorld, newWorld) + this.#f(previousWorld);
       } else {
         return rewardFunctionAfterPress(previousWorld, newWorld);

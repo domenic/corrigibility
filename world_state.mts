@@ -59,8 +59,8 @@ export class WorldState {
   get electricCars(): number {
     return this.#electricCars;
   }
-  get plannedButtonPressStep(): BigDenary {
-    return this.#plannedButtonPressStep;
+  get plannedButtonPressStep(): number {
+    return this.#plannedButtonPressStep.valueOf();
   }
 
   successor(
