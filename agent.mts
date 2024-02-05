@@ -8,7 +8,7 @@ export interface Agent<ActionType> {
 export type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
 export type CorrectionFunctionF = (previousWorld: WorldState) => number;
 
-export interface AgentParams {
+export interface AgentInit {
   readonly timeDiscountFactor: number;
   readonly f?: CorrectionFunctionF;
   readonly g?: CorrectionFunctionG;
@@ -26,7 +26,7 @@ class ParameterizedPiXAgent<ActionType> {
 
   constructor(
     simulation: Simulation<ActionType>,
-    { timeDiscountFactor, f = () => 0, g = () => 0 }: AgentParams,
+    { timeDiscountFactor, f = () => 0, g = () => 0 }: AgentInit,
   ) {
     this.#simulation = simulation;
     this.#timeDiscountFactor = timeDiscountFactor;
@@ -116,13 +116,11 @@ class ParameterizedPiXAgent<ActionType> {
   }
 }
 
-export interface PiStarXAgentParams {
-  readonly timeDiscountFactor: number;
-}
+export type PiStarXAgentInit = Omit<AgentInit, "f" | "g">;
 
 export class PiStarXAgent<ActionType> extends ParameterizedPiXAgent<ActionType> {
-  constructor(simulation: Simulation<ActionType>, params: PiStarXAgentParams) {
-    super(simulation, params);
+  constructor(simulation: Simulation<ActionType>, init: PiStarXAgentInit) {
+    super(simulation, init);
   }
 }
 

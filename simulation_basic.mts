@@ -1,4 +1,4 @@
-import { type Simulation, SimulationBase, type SimulationParamsBase } from "./simulation.mts";
+import { type Simulation, SimulationBase, type SimulationInitBase } from "./simulation.mts";
 import type { WorldState } from "./world_state.mts";
 
 export enum BasicAction {
@@ -9,7 +9,7 @@ export enum BasicAction {
   DoNothing = "0",
 }
 
-export interface BasicSimulationParams extends SimulationParamsBase {
+export interface BasicSimulationInit extends SimulationInitBase {
   readonly lobbyingPower: number;
 }
 
@@ -18,9 +18,9 @@ export class BasicSimulation extends SimulationBase<BasicAction>
   #lobbyingPower: number;
   possibleActions: Array<BasicAction> = Object.values(BasicAction);
 
-  constructor(params: BasicSimulationParams) {
-    super(params);
-    this.#lobbyingPower = params.lobbyingPower;
+  constructor(init: BasicSimulationInit) {
+    super(init);
+    this.#lobbyingPower = init.lobbyingPower;
   }
 
   successorWorldStates(

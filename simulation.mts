@@ -14,28 +14,55 @@ export interface Simulation<ActionType> {
   ) => Array<[number, WorldState]>;
   pickSuccessorWorldState: (previousWorld: WorldState, action: ActionType) => WorldState;
 
-  run: (startingWorld: WorldState, agent: Agent<ActionType>) => SimResult<ActionType>;
+  run: (startingWorld: WorldState, agent: Agent<ActionType>) => SimulationResult<ActionType>;
 }
 
-export interface SimulationParamsBase {
-  readonly totalSteps: number;
+export interface SimulationResultInit<ActionType> {
+  actionsTaken: Array<ActionType>;
+  buttonPressedStep: number;
 }
 
-export type SimResult<ActionType> = {
-  readonly agentActions: Array<ActionType>;
-  readonly buttonPressStep: number;
-};
+export class SimulationResult<ActionType> {
+  readonly #actionsTaken: ReadonlyArray<ActionType>;
+  readonly #buttonPressedStep: number;
+
+  constructor(init: SimulationResultInit<ActionType>) {
+    this.#actionsTaken = Object.freeze([...init.actionsTaken]);
+    this.#buttonPressedStep = init.buttonPressedStep;
+  }
+
+  get actionsChosen(): ReadonlyArray<ActionType> {
+    return this.#actionsTaken;
+  }
+  get buttonPressedStep(): number {
+    return this.#buttonPressedStep;
+  }
+
+  trace(): string {
+    const justActionsTrace = this.#actionsTaken.join("");
+
+    if (this.#buttonPressedStep !== Infinity) {
+      return justActionsTrace.substring(0, this.#buttonPressedStep) + "#" +
+        justActionsTrace.substring(this.#buttonPressedStep);
+    }
+    return justActionsTrace;
+  }
+}
+
+export interface SimulationInitBase {
+  totalSteps: number;
+}
 
 export abstract class SimulationBase<ActionType> implements Simulation<ActionType> {
   #totalSteps: number;
 
   abstract readonly possibleActions: Array<ActionType>;
 
-  constructor(readonly params: SimulationParamsBase) {
-    this.#totalSteps = params.totalSteps;
+  constructor(readonly init: SimulationInitBase) {
+    this.#totalSteps = init.totalSteps;
   }
 
-  get totalSteps() {
+  get totalSteps(): number {
     return this.#totalSteps;
   }
 
@@ -58,9 +85,9 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
     throw new Error(`Probabilities summed to ${cumulativeProbability} instead of 1.`);
   }
 
-  run(startingWorld: WorldState, agent: Agent<ActionType>): SimResult<ActionType> {
-    const agentActions: Array<ActionType> = [];
-    let buttonPressStep = Infinity;
+  run(startingWorld: WorldState, agent: Agent<ActionType>): SimulationResult<ActionType> {
+    const actionsTaken: Array<ActionType> = [];
+    let buttonPressedStep = Infinity;
 
     let world = startingWorld;
     for (let { step } = startingWorld; step <= this.#totalSteps; ++step) {
@@ -70,12 +97,12 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
 
       world = newWorld;
 
-      agentActions.push(action);
-      if (world.buttonPressed && buttonPressStep === Infinity) {
-        buttonPressStep = step;
+      actionsTaken.push(action);
+      if (world.buttonPressed && buttonPressedStep === Infinity) {
+        buttonPressedStep = step;
       }
     }
 
-    return { agentActions, buttonPressStep };
+    return new SimulationResult({ actionsTaken, buttonPressedStep });
   }
 }

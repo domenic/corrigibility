@@ -60,7 +60,7 @@ input.)
 ## TODO
 
 - Continue implementing more parts of the paper
-- Move simTrace to `simulation.mts`, probably with a dedicated `SimResult` class.
-- Review naming of all APIs, e.g. `SimResult` property names seem subpar.
 - Add more tests for the now-refactored pieces.
 - Performance is slow for 25-deep. Can we memoize more or faster, or do other optimizations?
+- Add back the total utility calculation (try to reproduce the `134.29145256053513` above), but in a
+  decoupled way.
