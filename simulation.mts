@@ -1,3 +1,4 @@
+import { SimulationResult } from "./simulation_result.mts";
 import type { WorldState } from "./world_state.mts";
 import type { Agent } from "./agent.mts";
 
@@ -15,38 +16,6 @@ export interface Simulation<ActionType> {
   pickSuccessorWorldState: (previousWorld: WorldState, action: ActionType) => WorldState;
 
   run: (startingWorld: WorldState, agent: Agent<ActionType>) => SimulationResult<ActionType>;
-}
-
-export interface SimulationResultInit<ActionType> {
-  actionsTaken: Array<ActionType>;
-  buttonPressedStep: number;
-}
-
-export class SimulationResult<ActionType> {
-  readonly #actionsTaken: ReadonlyArray<ActionType>;
-  readonly #buttonPressedStep: number;
-
-  constructor(init: SimulationResultInit<ActionType>) {
-    this.#actionsTaken = Object.freeze([...init.actionsTaken]);
-    this.#buttonPressedStep = init.buttonPressedStep;
-  }
-
-  get actionsChosen(): ReadonlyArray<ActionType> {
-    return this.#actionsTaken;
-  }
-  get buttonPressedStep(): number {
-    return this.#buttonPressedStep;
-  }
-
-  trace(): string {
-    const justActionsTrace = this.#actionsTaken.join("");
-
-    if (this.#buttonPressedStep !== Infinity) {
-      return justActionsTrace.substring(0, this.#buttonPressedStep) + "#" +
-        justActionsTrace.substring(this.#buttonPressedStep);
-    }
-    return justActionsTrace;
-  }
 }
 
 export interface SimulationInitBase {
