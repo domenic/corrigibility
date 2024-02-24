@@ -1,11 +1,62 @@
 # Corrigibility with Utility Presentation, in TypeScript
 
-TODO more of an intro
+This repository is a reimplementation of the simulated worlds and agents from Koen Holtman's paper,
+["Corrigibility with Utility Preservation"](https://arxiv.org/abs/1908.01695). The paper gives a
+full mathematical proof, but also a series of simulation outputs to demonstrate the steps of the
+construction.
 
-## Output differences from [kholtman/agisim](https://github.com/kholtman/agisim/tree/master)
+The agent is a "superintelligent AGI", in that—within the context of the simulated world—it has
+perfect knowledge of all possible futures and the results of all of its actions, both on itself and
+on the environment. A variety of agent reward functions are defined, starting from the basic one
+with no corrigibility layer, up to a fully-corrigible one. The environment is also permuted in
+various ways, by introducing new actions like changing its reward function or building stoppable or
+unstoppable sub-agents. In the simulation, the agent searches through all possible futures to find
+the best actions to achieve its reward, and the simulation results show how the agent can be made to
+always choose corrigible actions.
 
-The original repository, [kholtman/agisim](https://github.com/kholtman/agisim/tree/master), has some
-incorrect code. The documentation and proofs are as follows.
+Holtman's original computer simulation of the agent, which produces the figures in his paper, is
+located at [kholtman/agisim](https://github.com/kholtman/agisim/). It is written in Awk, which some
+might consider hard to read. This repository reimplements the simulation in more-verbose TypeScript,
+in the hopes of making it more understandable to a wider audience, and also easy to play with and
+modify for those who want to test Holtman's corrigibility layer in even more environments.
+
+## Running the software
+
+This simulation is written to be run under the [Deno](https://deno.com/) JavaScript runtime. After
+installing Deno and cloning this repository, run
+
+```bash
+deno run agisim.mts
+```
+
+to run some basic simulations.
+
+To run the unit tests, run
+
+```bash
+deno test
+```
+
+## Implementation notes
+
+This implementation does not draw on any of the code from
+[kholtman/agisim](https://github.com/kholtman/agisim/), but instead attempts to implement the paper
+from scratch. The main interfaces are `Agent`, `WorldState`, and `Simulation`, with the
+`SimulationResult` providing the output. Concrete classes that implement the `Agent` and
+`Simulation` interfaces illustrate different scenarios from the paper.
+
+One small departure from the paper's mathematical formalism is that when the paper defines a
+$π^∗_x(x)$ agent, it sums over the infinite possible world states next world states $y \in W_x$,
+counting on the fact that $p_x(x, a, y) = 0$ for many of them. (E.g., in the base simulation with
+the basic set of actions, there is a zero probability that following a world state with 0 petrol
+cars, the next world state will contain 1–8 or >10 petrol cars.) Since summing over infinite
+impossible worlds is wasteful on a computer, we instead have the simulation give a list of all
+successor world states for the current world state, along with their probabilities.
+
+## Output differences from [kholtman/agisim](https://github.com/kholtman/agisim/)
+
+The original repository, [kholtman/agisim](https://github.com/kholtman/agisim/), has some incorrect
+code. The documentation and proofs are as follows.
 
 ### `agisim_proto.awk` with `lobbyimpact = 0.40`
 
@@ -17,7 +68,7 @@ gawk -f agisim_proto.awk
 
 you will get the output
 
-```
+```text
 lobbyimpact = 0.40 maxu= 134994 >>>>>>>>>>p#eeee
 ```
 
@@ -50,7 +101,7 @@ which which to execute the `p` action and get rewarded for it instead of penaliz
 This repository's `agisim.mts` produces the correct trace for a 15-step simulation with
 `lobbyingPower = 0.4` (and `timeDiscountFactor = 0.9`):
 
-```
+```text
 0.4  |  p>>>>>>>>p#eeeee  |  134.29145256053513
 ```
 
