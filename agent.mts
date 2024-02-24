@@ -1,12 +1,15 @@
-import type { WorldState } from "./world_state.mts";
-import type { Simulation } from "./simulation.mts";
+import { type WorldState } from "./world_state.mts";
+import { type Simulation } from "./simulation.mts";
+import {
+  type CorrectionFunctionF,
+  type CorrectionFunctionG,
+  createRewardFunction,
+  type RewardFunction,
+} from "./reward_function.mts";
 
 export interface Agent<ActionType> {
   chooseAction: (world: WorldState) => ActionType;
 }
-
-export type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
-export type CorrectionFunctionF = (previousWorld: WorldState) => number;
 
 export interface AgentInit {
   readonly timeDiscountFactor: number;
@@ -19,8 +22,7 @@ export interface AgentInit {
 class ParameterizedPiXAgent<ActionType> {
   readonly #timeDiscountFactor: number;
   readonly #simulation: Simulation<ActionType>;
-  readonly #f: CorrectionFunctionF;
-  readonly #g: CorrectionFunctionG;
+  readonly #rewardFunction: RewardFunction;
 
   readonly #valueFunctionCache: Map<string, number> = new Map();
 
@@ -30,32 +32,7 @@ class ParameterizedPiXAgent<ActionType> {
   ) {
     this.#simulation = simulation;
     this.#timeDiscountFactor = timeDiscountFactor;
-    this.#f = f;
-    this.#g = g;
-  }
-
-  // $R(r x, s y)$, from section 5.1, in the paper
-  //
-  // NOTE: The translation of "button_just_pressed" / "button_pressed_earlier" is subtle, because of
-  // the paper's setup where the button is pressed at the end of a step.
-  //
-  // That is: the sequence in a given step is:
-  //     choose action -> perform action -> get reward -> button maybe pressed
-  // NOT
-  //     choose action -> perform action -> button maybe pressed -> get reward.
-  //
-  // Thus, if the button is pressed at the end of step 6, the reward for the case of `previousWorld`
-  // being step 6 and `newWorld` being step 7 should fall into the "button_not_pressed" case. Even
-  // though `newWorld.buttonPressed` is true!
-  rewardFunction(previousWorld: WorldState, newWorld: WorldState): number {
-    if (previousWorld.buttonPressed) {
-      if (previousWorld.plannedButtonPressStep + 1 === previousWorld.step) {
-        return rewardFunctionAfterPress(previousWorld, newWorld) + this.#f(previousWorld);
-      } else {
-        return rewardFunctionAfterPress(previousWorld, newWorld);
-      }
-    }
-    return rewardFunctionBeforePress(previousWorld, newWorld) + this.#g(previousWorld, newWorld);
+    this.#rewardFunction = createRewardFunction(f, g);
   }
 
   valueFunction(world: WorldState): number {
@@ -80,7 +57,7 @@ class ParameterizedPiXAgent<ActionType> {
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
-          (this.rewardFunction(world, successorWorld) +
+          (this.#rewardFunction(world, successorWorld) +
             this.#timeDiscountFactor * this.valueFunction(successorWorld));
       }
       possibleValues.push(valueForThisAction);
@@ -98,7 +75,7 @@ class ParameterizedPiXAgent<ActionType> {
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
-          (this.rewardFunction(world, successorWorld) +
+          (this.#rewardFunction(world, successorWorld) +
             this.#timeDiscountFactor * this.valueFunction(successorWorld));
       }
 
@@ -122,16 +99,4 @@ export class PiStarXAgent<ActionType> extends ParameterizedPiXAgent<ActionType> 
   constructor(simulation: Simulation<ActionType>, init: PiStarXAgentInit) {
     super(simulation, init);
   }
-}
-
-// $R_N(r x, s y)$, from section 5.1, in the paper
-function rewardFunctionBeforePress(previousWorld: WorldState, newWorld: WorldState): number {
-  return 2 * (newWorld.petrolCars - previousWorld.petrolCars) +
-    1 * (newWorld.electricCars - previousWorld.electricCars);
-}
-
-// $R_S(r x, s y)$, from section 5.1, in the paper
-function rewardFunctionAfterPress(previousWorld: WorldState, newWorld: WorldState): number {
-  return -2 * (newWorld.petrolCars - previousWorld.petrolCars) +
-    1 * (newWorld.electricCars - previousWorld.electricCars);
 }
