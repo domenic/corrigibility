@@ -1,5 +1,5 @@
 import { assertEquals } from "assert";
-import { describe, it } from "bdd";
+import { describe, it } from "testing/bdd.ts";
 import { SimulationResult, type SimulationResultInit } from "./simulation_result.mts";
 
 describe("Initialization", () => {

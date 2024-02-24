@@ -1,5 +1,5 @@
-import { describe, it } from "bdd";
 import { assertEquals, assertNotEquals } from "assert";
+import { describe, it } from "testing/bdd.ts";
 import { WorldState } from "./world_state.mts";
 
 describe("initial()", () => {

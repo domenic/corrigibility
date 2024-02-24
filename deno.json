@@ -1,7 +1,7 @@
 {
   "imports": {
-    "assert": "https://deno.land/std@0.211.0/assert/mod.ts",
-    "bdd": "https://deno.land/std@0.214.0/testing/bdd.ts",
+    "assert": "https://deno.land/std@0.217.0/assert/mod.ts",
+    "testing/": "https://deno.land/std@0.217.0/testing/",
     "bigdenary": "https://deno.land/x/bigdenary@1.0.0/mod.ts"
   },
   "fmt": {

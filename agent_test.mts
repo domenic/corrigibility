@@ -1,5 +1,5 @@
 import { assertEquals } from "assert";
-import { beforeEach, describe, it } from "bdd";
+import { beforeEach, describe, it } from "testing/bdd.ts";
 import { PiStarXAgent } from "./agent.mts";
 import { WorldState } from "./world_state.mts";
 import { type BasicAction, BasicSimulation } from "./simulation_basic.mts";
