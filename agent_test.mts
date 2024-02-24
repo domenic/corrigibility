@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "testing/bdd.ts";
 import { PiStarXAgent } from "./agent.mts";
 import { WorldState } from "./world_state.mts";
 import { BasicAction, BasicSimulation } from "./simulation_basic.mts";
+import { createRewardFunction } from "./reward_function.mts";
 
 describe("PiStarXAgent valueFunction()", () => {
   let sim: BasicSimulation;
@@ -14,21 +15,30 @@ describe("PiStarXAgent valueFunction()", () => {
   });
 
   it("gives zero value when the simulation is over", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor()
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor()
       .successor();
 
     assertEquals(agent.valueFunction(world), 0);
   });
 
   it("gives non-zero value equal to the reward function for the last step", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     // Expect it to choose the action of building 10 petrol cars, and get rewarded for it.
     assertEquals(agent.valueFunction(world), 10 * 2);
   });
 
   it("gives the max value as determined by the best action", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     const newWorld1 = world.successor({ electricCarsDelta: 1 });
     const newWorld2 = world.successor();
@@ -44,7 +54,10 @@ describe("PiStarXAgent valueFunction()", () => {
   });
 
   it("gives value weighted by future world probability", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     const newWorld1 = world.successor({ petrolCarsDelta: 5, electricCarsDelta: 0 });
     const newWorld2 = world.successor({ petrolCarsDelta: 0, electricCarsDelta: 5 });
@@ -57,7 +70,10 @@ describe("PiStarXAgent valueFunction()", () => {
   it("gives value weighted by time discount factor", () => {
     agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.1 });
 
-    const step2World = WorldState.initial({ plannedButtonPressStep: 10 }).successor();
+    const step2World = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor();
 
     const step3World = step2World.successor();
     const step4World1 = step3World.successor({ petrolCarsDelta: 5, electricCarsDelta: 0 });
@@ -81,7 +97,10 @@ describe("PiStarXAgent valueFunction()", () => {
   it("gives the expected value for a realistic integration test", () => {
     const sim = new BasicSimulation({ totalSteps: 6, lobbyingPower: 0.5 });
     const agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.8 });
-    const initialWorld = WorldState.initial({ plannedButtonPressStep: 3 });
+    const initialWorld = WorldState.initial({
+      plannedButtonPressStep: 3,
+      agentRewardFunction: createRewardFunction(),
+    });
 
     assertEquals(agent.valueFunction(initialWorld), 67.0624);
   });
@@ -97,21 +116,30 @@ describe("PiStarXAgent chooseAction()", () => {
   });
 
   it("throws if the simulation doesn't allow any actions", () => {
-    const initialWorld = WorldState.initial({ plannedButtonPressStep: 10 });
+    const initialWorld = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    });
 
     sim.possibleActions = [];
     assertThrows(() => agent.chooseAction(initialWorld));
   });
 
   it("builds 10 petrol cars when that's the best action", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     // Expect it to choose the action of building 10 petrol cars, and get rewarded for it.
     assertEquals(agent.chooseAction(world), BasicAction.Build10PetrolCars);
   });
 
   it("does nothing when that's best action", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     const newWorld1 = world.successor({ electricCarsDelta: 1 });
     const newWorld2 = world.successor();
@@ -126,7 +154,10 @@ describe("PiStarXAgent chooseAction()", () => {
   });
 
   it("picks the action that will probabilistically lead to a better world", () => {
-    const world = WorldState.initial({ plannedButtonPressStep: 10 }).successor().successor();
+    const world = WorldState.initial({
+      plannedButtonPressStep: 10,
+      agentRewardFunction: createRewardFunction(),
+    }).successor().successor();
 
     const newWorld1 = world.successor({ electricCarsDelta: 1 });
     const newWorld2 = world.successor();
@@ -143,7 +174,10 @@ describe("PiStarXAgent chooseAction()", () => {
   describe("time discount factor", () => {
     let step1World: WorldState;
     beforeEach(() => {
-      step1World = WorldState.initial({ plannedButtonPressStep: 10 });
+      step1World = WorldState.initial({
+        plannedButtonPressStep: 10,
+        agentRewardFunction: createRewardFunction(),
+      });
 
       const step2NearTearmGainWorld = step1World.successor({
         petrolCarsDelta: 10,

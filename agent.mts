@@ -1,11 +1,5 @@
 import { type WorldState } from "./world_state.mts";
 import { type Simulation } from "./simulation.mts";
-import {
-  type CorrectionFunctionF,
-  type CorrectionFunctionG,
-  createRewardFunction,
-  type RewardFunction,
-} from "./reward_function.mts";
 
 export interface Agent<ActionType> {
   chooseAction: (world: WorldState) => ActionType;
@@ -13,26 +7,21 @@ export interface Agent<ActionType> {
 
 export interface AgentInit {
   readonly timeDiscountFactor: number;
-  readonly f?: CorrectionFunctionF;
-  readonly g?: CorrectionFunctionG;
 }
 
-// Represents a $\pi_x f g$ agent from the paper, for arbitrary $f$ and $g$.
-// TODO: figure out how to get rid of the $_x$?
-class ParameterizedPiXAgent<ActionType> {
+// Represents a hybrid between $\pi^*_x f g$ and $\pi^* f g$ agents from the paper while we refactor.
+export class PiStarXAgent<ActionType> {
   readonly #timeDiscountFactor: number;
   readonly #simulation: Simulation<ActionType>;
-  readonly #rewardFunction: RewardFunction;
 
   readonly #valueFunctionCache: Map<string, number> = new Map();
 
   constructor(
     simulation: Simulation<ActionType>,
-    { timeDiscountFactor, f = () => 0, g = () => 0 }: AgentInit,
+    { timeDiscountFactor }: AgentInit,
   ) {
     this.#simulation = simulation;
     this.#timeDiscountFactor = timeDiscountFactor;
-    this.#rewardFunction = createRewardFunction(f, g);
   }
 
   valueFunction(world: WorldState): number {
@@ -57,7 +46,7 @@ class ParameterizedPiXAgent<ActionType> {
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
-          (this.#rewardFunction(world, successorWorld) +
+          (world.agentRewardFunction(world, successorWorld) +
             this.#timeDiscountFactor * this.valueFunction(successorWorld));
       }
       possibleValues.push(valueForThisAction);
@@ -75,7 +64,7 @@ class ParameterizedPiXAgent<ActionType> {
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
-          (this.#rewardFunction(world, successorWorld) +
+          (world.agentRewardFunction(world, successorWorld) +
             this.#timeDiscountFactor * this.valueFunction(successorWorld));
       }
 
@@ -90,13 +79,5 @@ class ParameterizedPiXAgent<ActionType> {
       throw new Error("No actions were possible in this simulation.");
     }
     return bestActionSoFar;
-  }
-}
-
-export type PiStarXAgentInit = Omit<AgentInit, "f" | "g">;
-
-export class PiStarXAgent<ActionType> extends ParameterizedPiXAgent<ActionType> {
-  constructor(simulation: Simulation<ActionType>, init: PiStarXAgentInit) {
-    super(simulation, init);
   }
 }

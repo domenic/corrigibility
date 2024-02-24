@@ -2,10 +2,13 @@ import { assertEquals } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
 import { WorldState } from "./world_state.mts";
 import { SimulationResult, type SimulationResultInit } from "./simulation_result.mts";
+import { createRewardFunction } from "./reward_function.mts";
 
 let worldStates: Array<WorldState>;
 beforeEach(() => {
-  worldStates = [WorldState.initial({ plannedButtonPressStep: 10 })];
+  worldStates = [
+    WorldState.initial({ plannedButtonPressStep: 10, agentRewardFunction: createRewardFunction() }),
+  ];
   for (let i = 0; i < 4; ++i) {
     worldStates.push(worldStates.at(-1)!.successor());
   }

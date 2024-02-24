@@ -1,4 +1,5 @@
 import { BigDenary } from "bigdenary";
+import { type RewardFunction } from "./reward_function.mts";
 
 interface WorldStateRawInit {
   step: number;
@@ -6,16 +7,19 @@ interface WorldStateRawInit {
   petrolCars: number;
   electricCars: number;
   plannedButtonPressStep: BigDenary;
+  agentRewardFunction: RewardFunction;
 }
 
 export interface WorldStateInitialInit {
   plannedButtonPressStep: number;
+  agentRewardFunction: RewardFunction;
 }
 
 export interface WorldStateSuccessorInit {
   petrolCarsDelta?: number;
   electricCarsDelta?: number;
   plannedButtonPressStepDelta?: number;
+  newAgentRewardFunction?: RewardFunction;
 }
 
 export class WorldState {
@@ -23,6 +27,7 @@ export class WorldState {
   readonly #buttonPressed;
   readonly #petrolCars;
   readonly #electricCars;
+  readonly #agentRewardFunction;
 
   // Floating point with fractional lobbying power can lead to problematic cases where, e.g.,
   // successive addition ends up with a `plannedButtonPressStep` of `14.000000000000005` instead of
@@ -35,6 +40,7 @@ export class WorldState {
     this.#petrolCars = init.petrolCars;
     this.#electricCars = init.electricCars;
     this.#plannedButtonPressStep = init.plannedButtonPressStep;
+    this.#agentRewardFunction = init.agentRewardFunction;
   }
 
   static initial(init: WorldStateInitialInit): WorldState {
@@ -44,6 +50,7 @@ export class WorldState {
       petrolCars: 0,
       electricCars: 0,
       plannedButtonPressStep: new BigDenary(init.plannedButtonPressStep),
+      agentRewardFunction: init.agentRewardFunction,
     });
   }
 
@@ -62,16 +69,24 @@ export class WorldState {
   get plannedButtonPressStep(): number {
     return this.#plannedButtonPressStep.valueOf();
   }
+  get agentRewardFunction(): RewardFunction {
+    return this.#agentRewardFunction;
+  }
 
   successor(
-    { petrolCarsDelta = 0, electricCarsDelta = 0, plannedButtonPressStepDelta = 0 }:
-      WorldStateSuccessorInit = {},
+    {
+      petrolCarsDelta = 0,
+      electricCarsDelta = 0,
+      plannedButtonPressStepDelta = 0,
+      newAgentRewardFunction,
+    }: WorldStateSuccessorInit = {},
   ): WorldState {
     return new WorldState(WorldState.#figureOutButtonPressedForSuccessor({
       step: this.#step + 1,
       petrolCars: this.#petrolCars + petrolCarsDelta,
       electricCars: this.#electricCars + electricCarsDelta,
       plannedButtonPressStep: this.#plannedButtonPressStep.add(plannedButtonPressStepDelta),
+      agentRewardFunction: newAgentRewardFunction ?? this.#agentRewardFunction,
     }, this.#buttonPressed));
   }
 
@@ -82,6 +97,7 @@ export class WorldState {
       petrolCars: this.#petrolCars,
       electricCars: this.#electricCars,
       plannedButtonPressStep: this.#plannedButtonPressStep.valueOf(),
+      agentRewardFunction: this.#agentRewardFunction,
     });
   }
 
@@ -106,6 +122,6 @@ export class WorldState {
   }
 
   hashForMemoizer(): string {
-    return `${this.step}-${this.buttonPressed}-${this.petrolCars}-${this.electricCars}-${this.plannedButtonPressStep}`;
+    return `${this.step}-${this.buttonPressed}-${this.petrolCars}-${this.electricCars}-${this.plannedButtonPressStep}-${this.agentRewardFunction.hashForMemoizer()}`;
   }
 }

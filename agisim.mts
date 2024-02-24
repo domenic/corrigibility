@@ -1,9 +1,13 @@
 import { WorldState } from "./world_state.mts";
 import { PiStarXAgent } from "./agent.mts";
 import { BasicSimulation } from "./simulation_basic.mts";
+import { createRewardFunction } from "./reward_function.mts";
 
 // Attempting to reproduce agisim_proto.awk
-const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
+const startingWorld = WorldState.initial({
+  plannedButtonPressStep: 6,
+  agentRewardFunction: createRewardFunction(),
+});
 
 const lobbyingPowers = [
   0.0,

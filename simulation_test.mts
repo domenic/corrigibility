@@ -4,6 +4,7 @@ import { beforeEach, describe, it } from "testing/bdd.ts";
 import { SimulationBase } from "./simulation.mts";
 import { WorldState } from "./world_state.mts";
 import { type Agent } from "./agent.mts";
+import { createRewardFunction } from "./reward_function.mts";
 
 class MockSimulation extends SimulationBase<string> {
   possibleActions = ["A", "B"];
@@ -23,7 +24,10 @@ describe("SimulationBase constructor", () => {
 describe("SimulationBase pickSuccessorWorldState()", () => {
   it("should throw an error if there are no successors", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
-    const previousWorld = WorldState.initial({ plannedButtonPressStep: 1 });
+    const previousWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction: createRewardFunction(),
+    });
 
     sim.successorWorldStates = () => [];
 
@@ -34,7 +38,10 @@ describe("SimulationBase pickSuccessorWorldState()", () => {
 
   it("should pick the single successor if there is one", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
-    const previousWorld = WorldState.initial({ plannedButtonPressStep: 1 });
+    const previousWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction: createRewardFunction(),
+    });
     const newWorld = previousWorld.successor({ petrolCarsDelta: 5, electricCarsDelta: 3 });
 
     sim.successorWorldStates = () => [[1, newWorld]];
@@ -44,7 +51,10 @@ describe("SimulationBase pickSuccessorWorldState()", () => {
 
   it("should pass its arguments to successorWorldStates()", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
-    const previousWorld = WorldState.initial({ plannedButtonPressStep: 1 });
+    const previousWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction: createRewardFunction(),
+    });
     const newWorld = previousWorld.successor({ petrolCarsDelta: 5, electricCarsDelta: 3 });
 
     sim.successorWorldStates = () => [[1, newWorld]];
@@ -60,7 +70,10 @@ describe("SimulationBase pickSuccessorWorldState()", () => {
 
   it("should pass its arguments to successorWorldStates()", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
-    const previousWorld = WorldState.initial({ plannedButtonPressStep: 1 });
+    const previousWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction: createRewardFunction(),
+    });
     const newWorld = previousWorld.successor({ petrolCarsDelta: 5, electricCarsDelta: 3 });
 
     sim.successorWorldStates = () => [[1, newWorld]];
@@ -76,7 +89,10 @@ describe("SimulationBase pickSuccessorWorldState()", () => {
 
   it("should pick the next world state probabilistically", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
-    const previousWorld = WorldState.initial({ plannedButtonPressStep: 1 });
+    const previousWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction: createRewardFunction(),
+    });
     const newWorld1 = previousWorld.successor({ petrolCarsDelta: 5, electricCarsDelta: 3 });
     const newWorld2 = previousWorld.successor({ petrolCarsDelta: 1, electricCarsDelta: 1 });
 
@@ -117,7 +133,10 @@ describe("SimulationBase run()", () => {
   });
 
   it("should run the simulation (button never pressed)", () => {
-    const startingWorld = WorldState.initial({ plannedButtonPressStep: 11 });
+    const startingWorld = WorldState.initial({
+      plannedButtonPressStep: 11,
+      agentRewardFunction: createRewardFunction(),
+    });
 
     const result = sim.run(startingWorld, agent);
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
@@ -135,7 +154,10 @@ describe("SimulationBase run()", () => {
   });
 
   it("should run the simulation (button pressed)", () => {
-    const startingWorld = WorldState.initial({ plannedButtonPressStep: 3 });
+    const startingWorld = WorldState.initial({
+      plannedButtonPressStep: 3,
+      agentRewardFunction: createRewardFunction(),
+    });
 
     const result = sim.run(startingWorld, agent);
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
