@@ -111,4 +111,5 @@ input.)
 ## TODO
 
 - Continue implementing more parts of the paper
+- Add unit tests for changing-over-time reward functions in `world_state_test.mts` and `agent_test.mts`.
 - Performance is slow for 25-deep. Can we memoize more or faster, or do other optimizations?

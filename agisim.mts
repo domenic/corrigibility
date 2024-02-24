@@ -1,5 +1,5 @@
 import { WorldState } from "./world_state.mts";
-import { PiStarXAgent } from "./agent.mts";
+import { PiStarAgent } from "./agent.mts";
 import { BasicSimulation } from "./simulation_basic.mts";
 import { createRewardFunction } from "./reward_function.mts";
 
@@ -34,13 +34,13 @@ for (const lobbyingPower of lobbyingPowers) {
     totalSteps: 15,
   });
 
-  const agent = new PiStarXAgent(sim, {
+  const agent = new PiStarAgent(sim, {
     timeDiscountFactor: 0.9,
   });
 
   const simResult = sim.run(startingWorld, agent);
   console.log(
     lobbyingPower.toFixed(1) + "  |  " + simResult.trace().padEnd(sim.totalSteps + 1) + "  |  " +
-      agent.valueFunction(startingWorld),
+      agent.valueFunction(startingWorld.agentRewardFunction, startingWorld),
   );
 }

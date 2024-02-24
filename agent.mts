@@ -1,5 +1,6 @@
 import { type WorldState } from "./world_state.mts";
 import { type Simulation } from "./simulation.mts";
+import { type RewardFunction } from "./reward_function.mts";
 
 export interface Agent<ActionType> {
   chooseAction: (world: WorldState) => ActionType;
@@ -9,8 +10,10 @@ export interface AgentInit {
   readonly timeDiscountFactor: number;
 }
 
-// Represents a hybrid between $\pi^*_x f g$ and $\pi^* f g$ agents from the paper while we refactor.
-export class PiStarXAgent<ActionType> {
+// Represents a full $\pi^*$ agent from the paper; see section 5.3.
+// (Any sub-type of $\pi^*$ agent, e.g. $\pi^* f_c g_0$ agents from section 6, can be expressed by
+// changing the reward function in the world state of the general $\pi^*$ agent.)
+export class PiStarAgent<ActionType> {
   readonly #timeDiscountFactor: number;
   readonly #simulation: Simulation<ActionType>;
 
@@ -24,38 +27,34 @@ export class PiStarXAgent<ActionType> {
     this.#timeDiscountFactor = timeDiscountFactor;
   }
 
-  valueFunction(world: WorldState): number {
-    const hash = world.hashForMemoizer();
+  valueFunction(rewardFunction: RewardFunction, world: WorldState): number {
+    const hash = rewardFunction.hashForMemoizer() + world.hashForMemoizer();
     if (!this.#valueFunctionCache.has(hash)) {
-      this.#valueFunctionCache.set(hash, this.#valueFunctionUnmemoized(world));
+      this.#valueFunctionCache.set(hash, this.#valueFunctionUnmemoized(rewardFunction, world));
     }
 
     return this.#valueFunctionCache.get(hash)!;
   }
 
-  // $V_x(x)$, equation (2), in the paper
-  #valueFunctionUnmemoized(world: WorldState): number {
+  // $V(r_c, r x)$, equation (5), in the paper
+  #valueFunctionUnmemoized(rewardFunction: RewardFunction, world: WorldState): number {
     if (world.step > this.#simulation.totalSteps) {
       return 0;
     }
 
-    const possibleValues: Array<number> = [];
+    const action = this.chooseAction(world);
 
-    for (const action of this.#simulation.possibleActions) {
-      const successorWorlds = this.#simulation.successorWorldStates(world, action);
-      let valueForThisAction = 0;
-      for (const [probability, successorWorld] of successorWorlds) {
-        valueForThisAction += probability *
-          (world.agentRewardFunction(world, successorWorld) +
-            this.#timeDiscountFactor * this.valueFunction(successorWorld));
-      }
-      possibleValues.push(valueForThisAction);
+    const successorWorlds = this.#simulation.successorWorldStates(world, action);
+    let valueForThisAction = 0;
+    for (const [probability, successorWorld] of successorWorlds) {
+      valueForThisAction += probability *
+        (rewardFunction(world, successorWorld) +
+          this.#timeDiscountFactor * this.valueFunction(rewardFunction, successorWorld));
     }
-
-    return Math.max(...possibleValues);
+    return valueForThisAction;
   }
 
-  // $\pi_x^*(x)$, equation (1), in the paper
+  // $\pi^*(r x)$, equation (4), in the paper
   chooseAction(world: WorldState): ActionType {
     let bestActionSoFar: ActionType | undefined;
     let bestValueSoFar = -Infinity;
@@ -65,7 +64,7 @@ export class PiStarXAgent<ActionType> {
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
           (world.agentRewardFunction(world, successorWorld) +
-            this.#timeDiscountFactor * this.valueFunction(successorWorld));
+            this.#timeDiscountFactor * this.valueFunction(world.agentRewardFunction, successorWorld));
       }
 
       // TODO consider noting indifference cases somehow

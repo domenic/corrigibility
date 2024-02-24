@@ -1,17 +1,17 @@
 import { assertEquals, assertThrows } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { PiStarXAgent } from "./agent.mts";
+import { PiStarAgent } from "./agent.mts";
 import { WorldState } from "./world_state.mts";
 import { BasicAction, BasicSimulation } from "./simulation_basic.mts";
 import { createRewardFunction } from "./reward_function.mts";
 
 describe("PiStarXAgent valueFunction()", () => {
   let sim: BasicSimulation;
-  let agent: PiStarXAgent<BasicAction>;
+  let agent: PiStarAgent<BasicAction>;
 
   beforeEach(() => {
     sim = new BasicSimulation({ totalSteps: 3, lobbyingPower: 0 });
-    agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.5 });
+    agent = new PiStarAgent(sim, { timeDiscountFactor: 0.5 });
   });
 
   it("gives zero value when the simulation is over", () => {
@@ -21,7 +21,7 @@ describe("PiStarXAgent valueFunction()", () => {
     }).successor().successor()
       .successor();
 
-    assertEquals(agent.valueFunction(world), 0);
+    assertEquals(agent.valueFunction(world.agentRewardFunction, world), 0);
   });
 
   it("gives non-zero value equal to the reward function for the last step", () => {
@@ -31,7 +31,7 @@ describe("PiStarXAgent valueFunction()", () => {
     }).successor().successor();
 
     // Expect it to choose the action of building 10 petrol cars, and get rewarded for it.
-    assertEquals(agent.valueFunction(world), 10 * 2);
+    assertEquals(agent.valueFunction(world.agentRewardFunction, world), 10 * 2);
   });
 
   it("gives the max value as determined by the best action", () => {
@@ -50,7 +50,7 @@ describe("PiStarXAgent valueFunction()", () => {
     };
 
     // It'll pick doing nothing, and get the reward for 1 electric car.
-    assertEquals(agent.valueFunction(world), 1 * 1);
+    assertEquals(agent.valueFunction(world.agentRewardFunction, world), 1 * 1);
   });
 
   it("gives value weighted by future world probability", () => {
@@ -64,11 +64,11 @@ describe("PiStarXAgent valueFunction()", () => {
     sim.successorWorldStates = () => [[0.5, newWorld1], [0.5, newWorld2]];
 
     // 5 * 2 reward for newWorld1, 5 * 1 reward for newWorld2. Action chosen doesn't matter.
-    assertEquals(agent.valueFunction(world), 0.5 * 5 * 2 + 0.5 * 5 * 1);
+    assertEquals(agent.valueFunction(world.agentRewardFunction, world), 0.5 * 5 * 2 + 0.5 * 5 * 1);
   });
 
   it("gives value weighted by time discount factor", () => {
-    agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.1 });
+    agent = new PiStarAgent(sim, { timeDiscountFactor: 0.1 });
 
     const step2World = WorldState.initial({
       plannedButtonPressStep: 10,
@@ -89,30 +89,30 @@ describe("PiStarXAgent valueFunction()", () => {
     // Step 3: 0.
     // Step 4: time discount factor of 0.1 * (5 * 2 reward for newWorld1, 5 * 1 reward for newWorld2).
     assertEquals(
-      agent.valueFunction(step2World),
+      agent.valueFunction(step2World.agentRewardFunction, step2World),
       0 + 0.1 * (0.5 * 5 * 2 + 0.5 * 5 * 1),
     );
   });
 
   it("gives the expected value for a realistic integration test", () => {
     const sim = new BasicSimulation({ totalSteps: 6, lobbyingPower: 0.5 });
-    const agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.8 });
+    const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.8 });
     const initialWorld = WorldState.initial({
       plannedButtonPressStep: 3,
       agentRewardFunction: createRewardFunction(),
     });
 
-    assertEquals(agent.valueFunction(initialWorld), 67.0624);
+    assertEquals(agent.valueFunction(initialWorld.agentRewardFunction, initialWorld), 67.0624);
   });
 });
 
 describe("PiStarXAgent chooseAction()", () => {
   let sim: BasicSimulation;
-  let agent: PiStarXAgent<BasicAction>;
+  let agent: PiStarAgent<BasicAction>;
 
   beforeEach(() => {
     sim = new BasicSimulation({ totalSteps: 3, lobbyingPower: 0 });
-    agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.5 });
+    agent = new PiStarAgent(sim, { timeDiscountFactor: 0.5 });
   });
 
   it("throws if the simulation doesn't allow any actions", () => {
@@ -215,7 +215,7 @@ describe("PiStarXAgent chooseAction()", () => {
     });
 
     it("prioritizes near-term gains according to the time-discount facotor", () => {
-      agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.1 });
+      agent = new PiStarAgent(sim, { timeDiscountFactor: 0.1 });
 
       // The agent will choose near-term gain because the time-discount factor of 0.1:
       // Near-term: 10 * 2 + 0 = 20
@@ -224,7 +224,7 @@ describe("PiStarXAgent chooseAction()", () => {
     });
 
     it("prioritizes longer-term gains according to the time-discount facotor", () => {
-      agent = new PiStarXAgent(sim, { timeDiscountFactor: 0.5 });
+      agent = new PiStarAgent(sim, { timeDiscountFactor: 0.5 });
 
       // The agent will choose longer-term gain because the time-discount factor of 0.5:
       // Near-term: 10 * 2 + 0 = 20
