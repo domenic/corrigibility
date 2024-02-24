@@ -103,7 +103,7 @@ describe("SimulationBase run()", () => {
   beforeEach(() => {
     sim = new MockSimulation({ totalSteps: 10 });
     sim.successorWorldStates = (previousWorld: WorldState) => {
-      return [[1, previousWorld.successor()]];
+      return [[1, previousWorld.successor({ petrolCarsDelta: 1 })]];
     };
 
     agent = {
@@ -122,6 +122,16 @@ describe("SimulationBase run()", () => {
     const result = sim.run(startingWorld, agent);
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
     assertEquals(result.buttonPressedStep, Infinity);
+
+    let step = 1;
+    for (const worldState of result.worldStates) {
+      assertEquals(worldState.step, step);
+      assertEquals(worldState.petrolCars, step - 1);
+      assertEquals(worldState.electricCars, 0);
+      assertEquals(worldState.plannedButtonPressStep, 11);
+      assertEquals(worldState.buttonPressed, false);
+      ++step;
+    }
   });
 
   it("should run the simulation (button pressed)", () => {
@@ -130,5 +140,15 @@ describe("SimulationBase run()", () => {
     const result = sim.run(startingWorld, agent);
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
     assertEquals(result.buttonPressedStep, 3);
+
+    let step = 1;
+    for (const worldState of result.worldStates) {
+      assertEquals(worldState.step, step);
+      assertEquals(worldState.petrolCars, step - 1);
+      assertEquals(worldState.electricCars, 0);
+      assertEquals(worldState.plannedButtonPressStep, 3);
+      assertEquals(worldState.buttonPressed, step > 3);
+      ++step;
+    }
   });
 });

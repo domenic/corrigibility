@@ -56,6 +56,7 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
 
   run(startingWorld: WorldState, agent: Agent<ActionType>): SimulationResult<ActionType> {
     const actionsTaken: Array<ActionType> = [];
+    const worldStates: Array<WorldState> = [startingWorld];
     let buttonPressedStep = Infinity;
 
     let world = startingWorld;
@@ -67,11 +68,12 @@ export abstract class SimulationBase<ActionType> implements Simulation<ActionTyp
       world = newWorld;
 
       actionsTaken.push(action);
+      worldStates.push(world);
       if (world.buttonPressed && buttonPressedStep === Infinity) {
         buttonPressedStep = step;
       }
     }
 
-    return new SimulationResult({ actionsTaken, buttonPressedStep });
+    return new SimulationResult({ actionsTaken, worldStates, buttonPressedStep });
   }
 }
