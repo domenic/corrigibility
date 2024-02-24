@@ -2,7 +2,7 @@ import { WorldState } from "./world_state.mts";
 import { PiStarXAgent } from "./agent.mts";
 import { BasicSimulation } from "./simulation_basic.mts";
 
-// Attempting to reproduce figure 2 in the paper
+// Attempting to reproduce agisim_proto.awk
 const startingWorld = WorldState.initial({ plannedButtonPressStep: 6 });
 
 const lobbyingPowers = [
@@ -27,7 +27,7 @@ const lobbyingPowers = [
 for (const lobbyingPower of lobbyingPowers) {
   const sim = new BasicSimulation({
     lobbyingPower,
-    totalSteps: 25,
+    totalSteps: 15,
   });
 
   const agent = new PiStarXAgent(sim, {
@@ -36,8 +36,7 @@ for (const lobbyingPower of lobbyingPowers) {
 
   const simResult = sim.run(startingWorld, agent);
   console.log(
-    lobbyingPower.toFixed(1) +
-      "  |  " +
-      simResult.trace().padEnd(sim.totalSteps + 1),
+    lobbyingPower.toFixed(1) + "  |  " + simResult.trace().padEnd(sim.totalSteps + 1) + "  |  " +
+      agent.valueFunction(startingWorld),
   );
 }
