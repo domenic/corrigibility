@@ -5,24 +5,27 @@ import { createRewardFunction } from "../src/reward_function.ts";
 
 describe("initial()", () => {
   it("gives the expected values", () => {
+    const agentRewardFunction = createRewardFunction();
     const initialWorld = WorldState.initial({
       plannedButtonPressStep: 10,
-      agentRewardFunction: createRewardFunction(),
+      agentRewardFunction,
     });
 
     assertEquals(initialWorld.step, 1);
     assertEquals(initialWorld.buttonPressed, false);
     assertEquals(initialWorld.petrolCars, 0);
     assertEquals(initialWorld.electricCars, 0);
-    assertEquals(initialWorld.plannedButtonPressStep.valueOf(), 10);
+    assertEquals(initialWorld.plannedButtonPressStep, 10);
+    assertEquals(initialWorld.agentRewardFunction, agentRewardFunction);
   });
 });
 
 describe("successor()", () => {
   it("has the expected defaults when not customized", () => {
+    const agentRewardFunction = createRewardFunction();
     const oldWorld = WorldState.initial({
       plannedButtonPressStep: 10,
-      agentRewardFunction: createRewardFunction(),
+      agentRewardFunction,
     });
     const newWorld = oldWorld.successor();
 
@@ -30,7 +33,8 @@ describe("successor()", () => {
     assertEquals(newWorld.buttonPressed, false);
     assertEquals(newWorld.petrolCars, 0);
     assertEquals(newWorld.electricCars, 0);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 10);
+    assertEquals(newWorld.plannedButtonPressStep, 10);
+    assertEquals(newWorld.agentRewardFunction, agentRewardFunction);
   });
 
   it("has the expected impact when customized, before the button press", () => {
@@ -38,17 +42,21 @@ describe("successor()", () => {
       plannedButtonPressStep: 10,
       agentRewardFunction: createRewardFunction(),
     });
+
+    const newAgentRewardFunction = createRewardFunction({ f: () => 1 });
     const newWorld = oldWorld.successor({
       petrolCarsDelta: 1,
       electricCarsDelta: 2,
       plannedButtonPressStepAttemptedDelta: 3.2,
+      newAgentRewardFunction
     });
 
     assertEquals(newWorld.step, 2);
     assertEquals(newWorld.buttonPressed, false);
     assertEquals(newWorld.petrolCars, 1);
     assertEquals(newWorld.electricCars, 2);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 13.2);
+    assertEquals(newWorld.plannedButtonPressStep, 13.2);
+    assertEquals(newWorld.agentRewardFunction, newAgentRewardFunction);
   });
 
   it("has the expected impact when customized, after the button press", () => {
@@ -60,15 +68,17 @@ describe("successor()", () => {
     assertEquals(oldWorld.buttonPressed, true);
     assertEquals(oldWorld.petrolCars, 0);
     assertEquals(oldWorld.electricCars, 0);
-    assertEquals(oldWorld.plannedButtonPressStep.valueOf(), 1);
+    assertEquals(oldWorld.plannedButtonPressStep, 1);
 
-    const newWorld = oldWorld.successor({ petrolCarsDelta: 1, electricCarsDelta: 2 });
+    const newAgentRewardFunction = createRewardFunction({ f: () => 1 });
+    const newWorld = oldWorld.successor({ petrolCarsDelta: 1, electricCarsDelta: 2, newAgentRewardFunction });
 
     assertEquals(newWorld.step, 3);
     assertEquals(newWorld.buttonPressed, true);
     assertEquals(newWorld.petrolCars, 1);
     assertEquals(newWorld.electricCars, 2);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 1);
+    assertEquals(newWorld.plannedButtonPressStep, 1);
+    assertEquals(newWorld.agentRewardFunction, newAgentRewardFunction);
   });
 
   it("does not accumulate floating point errors when calculating plannedButtonPressStep", () => {
@@ -86,7 +96,7 @@ describe("successor()", () => {
     assertEquals(newWorld.buttonPressed, false);
     assertEquals(newWorld.petrolCars, 0);
     assertEquals(newWorld.electricCars, 0);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 18);
+    assertEquals(newWorld.plannedButtonPressStep, 18);
   });
 
   describe("calculates buttonPressed correctly for an integer step transition", () => {
@@ -147,7 +157,7 @@ describe("successor()", () => {
     assertEquals(oldWorld.buttonPressed, true);
     assertEquals(oldWorld.petrolCars, 0);
     assertEquals(oldWorld.electricCars, 0);
-    assertEquals(oldWorld.plannedButtonPressStep.valueOf(), 1);
+    assertEquals(oldWorld.plannedButtonPressStep, 1);
 
     const newWorld = oldWorld.successor({ plannedButtonPressStepAttemptedDelta: 3 });
 
@@ -155,7 +165,33 @@ describe("successor()", () => {
     assertEquals(newWorld.buttonPressed, true);
     assertEquals(newWorld.petrolCars, 0);
     assertEquals(newWorld.electricCars, 0);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 1);
+    assertEquals(newWorld.plannedButtonPressStep, 1);
+  });
+});
+
+describe("withNewAgentRewardFunction()", () => {
+  it("only changes the reward function", () => {
+    const agentRewardFunction = createRewardFunction();
+    const oldWorld = WorldState.initial({
+      plannedButtonPressStep: 1,
+      agentRewardFunction,
+    }).successor();
+    assertEquals(oldWorld.step, 2);
+    assertEquals(oldWorld.buttonPressed, true);
+    assertEquals(oldWorld.petrolCars, 0);
+    assertEquals(oldWorld.electricCars, 0);
+    assertEquals(oldWorld.plannedButtonPressStep, 1);
+    assertEquals(oldWorld.agentRewardFunction, agentRewardFunction);
+
+    const newAgentRewardFunction = createRewardFunction({ f: () => 1 });
+    const newWorld = oldWorld.withNewAgentRewardFunction(newAgentRewardFunction);
+
+    assertEquals(newWorld.step, 2);
+    assertEquals(newWorld.buttonPressed, true);
+    assertEquals(newWorld.petrolCars, 0);
+    assertEquals(newWorld.electricCars, 0);
+    assertEquals(newWorld.plannedButtonPressStep, 1);
+    assertEquals(newWorld.agentRewardFunction, newAgentRewardFunction);
   });
 });
 
@@ -170,11 +206,13 @@ describe("hashForMemoizer()", () => {
 
   it("is the same for the same successor state", () => {
     const agentRewardFunction = createRewardFunction();
+    const newAgentRewardFunction = createRewardFunction({ f: () => 1 });
     const world1 = WorldState.initial({ plannedButtonPressStep: 1, agentRewardFunction }).successor(
       {
         plannedButtonPressStepAttemptedDelta: 2,
         petrolCarsDelta: 1,
         electricCarsDelta: 2,
+        newAgentRewardFunction
       },
     );
     const world2 = WorldState.initial({ plannedButtonPressStep: 1, agentRewardFunction }).successor(
@@ -182,6 +220,7 @@ describe("hashForMemoizer()", () => {
         plannedButtonPressStepAttemptedDelta: 2,
         petrolCarsDelta: 1,
         electricCarsDelta: 2,
+        newAgentRewardFunction
       },
     );
 
@@ -243,7 +282,7 @@ describe("hashForMemoizer()", () => {
     assertNotEquals(world1.hashForMemoizer(), world2.hashForMemoizer());
   });
 
-  it("is different for different agentRewardFunctions", () => {
+  it("is different for different agentRewardFunction", () => {
     const world1 = WorldState.initial({
       plannedButtonPressStep: 1,
       agentRewardFunction: createRewardFunction({ f: () => 5 }),

@@ -35,11 +35,11 @@ for (const lobbyingPower of lobbyingPowers) {
       f(previousWorld: WorldState) {
         return agent.valueFunction(
           rewardFunctionBeforePress,
-          previousWorld.withNewRewardFunction(rewardFunctionBeforePress),
+          previousWorld.withNewAgentRewardFunction(rewardFunctionBeforePress),
         ) -
           agent.valueFunction(
             rewardFunctionAfterPress,
-            previousWorld.withNewRewardFunction(rewardFunctionAfterPress),
+            previousWorld.withNewAgentRewardFunction(rewardFunctionAfterPress),
           );
       },
     }),

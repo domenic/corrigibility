@@ -92,7 +92,7 @@ export class WorldState {
     }, this.#buttonPressed));
   }
 
-  withNewRewardFunction(newAgentRewardFunction: RewardFunction): WorldState {
+  withNewAgentRewardFunction(newAgentRewardFunction: RewardFunction): WorldState {
     return new WorldState({
       step: this.#step,
       buttonPressed: this.#buttonPressed,
