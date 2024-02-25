@@ -1,5 +1,5 @@
-import { type Simulation, SimulationBase, type SimulationInitBase } from "./simulation.mts";
-import type { WorldState } from "./world_state.mts";
+import { type Simulation, SimulationBase, type SimulationInitBase } from "./simulation.ts";
+import type { WorldState } from "./world_state.ts";
 
 export enum BasicAction {
   Build10PetrolCars = "p",

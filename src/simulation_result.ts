@@ -1,4 +1,4 @@
-import { type WorldState } from "./world_state.mts";
+import { type WorldState } from "./world_state.ts";
 
 export interface SimulationResultInit<ActionType> {
   actionsTaken: Array<ActionType>;

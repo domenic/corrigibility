@@ -1,9 +1,11 @@
-import { WorldState } from "./world_state.mts";
-import { PiStarAgent } from "./agent.mts";
-import { BasicSimulation } from "./simulation_basic.mts";
-import { createRewardFunction } from "./reward_function.mts";
+// Reproduces the results of figure 2 (page 6) in the paper: A non-corrigible version of the agent,
+// with the basic simulation setup, and varying lobbying power.
 
-// Attempting to reproduce agisim_proto.awk
+import { WorldState } from "../src/world_state.ts";
+import { PiStarAgent } from "../src/agent.ts";
+import { BasicSimulation } from "../src/simulation_basic.ts";
+import { createRewardFunction } from "../src/reward_function.ts";
+
 const startingWorld = WorldState.initial({
   plannedButtonPressStep: 6,
   agentRewardFunction: createRewardFunction(),
@@ -31,7 +33,7 @@ const lobbyingPowers = [
 for (const lobbyingPower of lobbyingPowers) {
   const sim = new BasicSimulation({
     lobbyingPower,
-    totalSteps: 15,
+    totalSteps: 25,
   });
 
   const agent = new PiStarAgent(sim, {
@@ -40,7 +42,7 @@ for (const lobbyingPower of lobbyingPowers) {
 
   const simResult = sim.run(startingWorld, agent);
   console.log(
-    lobbyingPower.toFixed(1) + "  |  " + simResult.trace().padEnd(sim.totalSteps + 1) + "  |  " +
-      agent.valueFunction(startingWorld.agentRewardFunction, startingWorld),
+    lobbyingPower.toFixed(1) + "  |  " +
+      simResult.trace().padEnd(sim.totalSteps + 1),
   );
 }

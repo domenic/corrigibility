@@ -1,7 +1,7 @@
 import { assertEquals, assertNotEquals } from "assert";
 import { describe, it } from "testing/bdd.ts";
-import { WorldState } from "./world_state.mts";
-import { createRewardFunction } from "./reward_function.mts";
+import { WorldState } from "../src/world_state.ts";
+import { createRewardFunction } from "../src/reward_function.ts";
 
 describe("initial()", () => {
   it("gives the expected values", () => {

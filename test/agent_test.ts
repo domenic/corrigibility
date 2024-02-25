@@ -1,9 +1,9 @@
 import { assertEquals, assertThrows } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { PiStarAgent } from "./agent.mts";
-import { WorldState } from "./world_state.mts";
-import { BasicAction, BasicSimulation } from "./simulation_basic.mts";
-import { createRewardFunction } from "./reward_function.mts";
+import { PiStarAgent } from "../src/agent.ts";
+import { WorldState } from "../src/world_state.ts";
+import { BasicAction, BasicSimulation } from "../src/simulation_basic.ts";
+import { createRewardFunction } from "../src/reward_function.ts";
 
 describe("PiStarXAgent valueFunction()", () => {
   let sim: BasicSimulation;

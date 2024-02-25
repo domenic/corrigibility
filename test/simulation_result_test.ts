@@ -1,8 +1,8 @@
 import { assertEquals } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { WorldState } from "./world_state.mts";
-import { SimulationResult, type SimulationResultInit } from "./simulation_result.mts";
-import { createRewardFunction } from "./reward_function.mts";
+import { WorldState } from "../src/world_state.ts";
+import { SimulationResult, type SimulationResultInit } from "../src/simulation_result.ts";
+import { createRewardFunction } from "../src/reward_function.ts";
 
 let worldStates: Array<WorldState>;
 beforeEach(() => {

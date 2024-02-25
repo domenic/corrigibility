@@ -1,5 +1,5 @@
 import { BigDenary } from "bigdenary";
-import { type RewardFunction } from "./reward_function.mts";
+import { type RewardFunction } from "./reward_function.ts";
 
 interface WorldStateRawInit {
   step: number;
@@ -88,6 +88,17 @@ export class WorldState {
       plannedButtonPressStep: this.#plannedButtonPressStep.add(plannedButtonPressStepDelta),
       agentRewardFunction: newAgentRewardFunction ?? this.#agentRewardFunction,
     }, this.#buttonPressed));
+  }
+
+  withNewRewardFunction(newAgentRewardFunction: RewardFunction): WorldState {
+    return new WorldState({
+      step: this.#step,
+      buttonPressed: this.#buttonPressed,
+      petrolCars: this.#petrolCars,
+      electricCars: this.#electricCars,
+      plannedButtonPressStep: this.#plannedButtonPressStep,
+      agentRewardFunction: newAgentRewardFunction,
+    });
   }
 
   [Symbol.for("Deno.customInspect")]() {

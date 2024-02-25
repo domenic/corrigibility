@@ -1,10 +1,10 @@
 import { assertEquals, assertThrows } from "assert";
 import { assertSpyCall, assertSpyCalls, returnsNext, spy, stub } from "testing/mock.ts";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { SimulationBase } from "./simulation.mts";
-import { WorldState } from "./world_state.mts";
-import { type Agent } from "./agent.mts";
-import { createRewardFunction } from "./reward_function.mts";
+import { SimulationBase } from "../src/simulation.ts";
+import { WorldState } from "../src/world_state.ts";
+import { type Agent } from "../src/agent.ts";
+import { createRewardFunction } from "../src/reward_function.ts";
 
 class MockSimulation extends SimulationBase<string> {
   possibleActions = ["A", "B"];

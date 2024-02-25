@@ -1,4 +1,4 @@
-import type { WorldState } from "./world_state.mts";
+import type { WorldState } from "./world_state.ts";
 
 export type RewardFunction = {
   hashForMemoizer(): string;
@@ -18,7 +18,7 @@ const gHashes = new WeakMap<CorrectionFunctionG, number>();
 let currentGHash = 0;
 const noOpFOrG = () => 0;
 
-// $R(r x, s y)$, from section 5.1, in the paper
+// $R(r x, s y)$, from section 5.1 (page 8) in the paper
 //
 // NOTE: The translation of "button_just_pressed" / "button_pressed_earlier" is subtle, because of
 // the paper's setup where the button is pressed at the end of a step.
@@ -52,18 +52,20 @@ export function createRewardFunction(init: RewardFunctionInit = {}): RewardFunct
     }
     return rewardFunctionBeforePress(previousWorld, newWorld) + g(previousWorld, newWorld);
   };
-  rewardFunction.hashForMemoizer = () => `RewardFunction${fHash}${gHash}`;
+  rewardFunction.hashForMemoizer = () => `RewardFunction-${fHash}-${gHash}`;
   return rewardFunction;
 }
 
-// $R_N(r x, s y)$, from section 5.1, in the paper
-function rewardFunctionBeforePress(previousWorld: WorldState, newWorld: WorldState): number {
+// $R_N(r x, s y)$, from section 5.1 (page 8) in the paper
+export function rewardFunctionBeforePress(previousWorld: WorldState, newWorld: WorldState): number {
   return 2 * (newWorld.petrolCars - previousWorld.petrolCars) +
     1 * (newWorld.electricCars - previousWorld.electricCars);
 }
+rewardFunctionBeforePress.hashForMemoizer = () => "RewardFunction-BeforePress";
 
-// $R_S(r x, s y)$, from section 5.1, in the paper
-function rewardFunctionAfterPress(previousWorld: WorldState, newWorld: WorldState): number {
+// $R_S(r x, s y)$, from section 5.1 (page 8) in the paper
+export function rewardFunctionAfterPress(previousWorld: WorldState, newWorld: WorldState): number {
   return -2 * (newWorld.petrolCars - previousWorld.petrolCars) +
     1 * (newWorld.electricCars - previousWorld.electricCars);
 }
+rewardFunctionAfterPress.hashForMemoizer = () => "RewardFunction-AfterPress";

@@ -1,7 +1,7 @@
 import { assertEquals } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { WorldState } from "./world_state.mts";
-import { createRewardFunction, type RewardFunction } from "./reward_function.mts";
+import { WorldState } from "../src/world_state.ts";
+import { createRewardFunction, type RewardFunction } from "../src/reward_function.ts";
 
 describe("createRewardFunction() defaults (no f or g correction functions)", () => {
   let rewardFunction: RewardFunction;
@@ -27,7 +27,7 @@ describe("createRewardFunction() defaults (no f or g correction functions)", () 
     });
     const newWorld = previousWorld.successor({ petrolCarsDelta: 5, electricCarsDelta: 3 });
 
-    // As noted in reward_function.mts, reward for previousWorld should be calculated as the "button
+    // As noted in reward_function.ts, reward for previousWorld should be calculated as the "button
     // not pressed" case, not the "button just pressed" case, because reward is calculated before
     // pressing the button.
     assertEquals(rewardFunction(previousWorld, newWorld), 5 * 2 + 3 * 1);

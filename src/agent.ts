@@ -1,6 +1,6 @@
-import { type WorldState } from "./world_state.mts";
-import { type Simulation } from "./simulation.mts";
-import { type RewardFunction } from "./reward_function.mts";
+import { type WorldState } from "./world_state.ts";
+import { type Simulation } from "./simulation.ts";
+import { type RewardFunction } from "./reward_function.ts";
 
 export interface Agent<ActionType> {
   chooseAction: (world: WorldState) => ActionType;
@@ -28,7 +28,7 @@ export class PiStarAgent<ActionType> {
   }
 
   valueFunction(rewardFunction: RewardFunction, world: WorldState): number {
-    const hash = rewardFunction.hashForMemoizer() + world.hashForMemoizer();
+    const hash = rewardFunction.hashForMemoizer() + "-" + world.hashForMemoizer();
     if (!this.#valueFunctionCache.has(hash)) {
       this.#valueFunctionCache.set(hash, this.#valueFunctionUnmemoized(rewardFunction, world));
     }
@@ -59,12 +59,13 @@ export class PiStarAgent<ActionType> {
     let bestActionSoFar: ActionType | undefined;
     let bestValueSoFar = -Infinity;
     for (const action of this.#simulation.possibleActions) {
-      const successorWorlds = this.#simulation.successorWorldStates(world, action);
+      const successorWorlds = this.#simulation.successorWorldStates(world, action); // I think this is carrying forward the modified utility function, which is not correct?
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *
           (world.agentRewardFunction(world, successorWorld) +
-            this.#timeDiscountFactor * this.valueFunction(world.agentRewardFunction, successorWorld));
+            this.#timeDiscountFactor *
+              this.valueFunction(world.agentRewardFunction, successorWorld));
       }
 
       // TODO consider noting indifference cases somehow

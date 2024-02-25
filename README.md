@@ -23,13 +23,12 @@ modify for those who want to test Holtman's corrigibility layer in even more env
 ## Running the software
 
 This simulation is written to be run under the [Deno](https://deno.com/) JavaScript runtime. After
-installing Deno and cloning this repository, run
+installing Deno and cloning this repository, you can run the various scenarios using commands such
+as
 
 ```bash
-deno run agisim.mts
+deno run scenarios/01-figure2.ts
 ```
-
-to run some basic simulations.
 
 To run the unit tests, run
 
@@ -98,18 +97,25 @@ pressed yet. But now we have reached the end of step 10, and so the button gets 
 is incorrect: it should show `#` after the 10th `>`, instead of giving the agent an extra 11th step
 which which to execute the `p` action and get rewarded for it instead of penalized.
 
-This repository's `agisim.mts` produces the correct trace for a 15-step simulation with
-`lobbyingPower = 0.4` (and `timeDiscountFactor = 0.9`):
+This repository's `scenarios/00-agisim_proto.ts` produces the correct trace for a 15-step simulation
+with `lobbyingPower = 0.4` (and `timeDiscountFactor = 0.9`):
+
+```bash
+deno run scenarios/00-agisim_proto.ts
+```
+
+gives the line
 
 ```text
 0.4  |  p>>>>>>>>p#eeeee  |  134.29145256053513
 ```
 
-(TODO update the above paragraph as `agisim.mts` evolves to document the correct output format and
-input.)
+among others.
 
 ## TODO
 
 - Continue implementing more parts of the paper
-- Add unit tests for changing-over-time reward functions in `world_state_test.mts` and `agent_test.mts`.
+  - `02-figure4.ts` is not correct right now.
+- Add unit tests for changing-over-time reward functions in `world_state_test.ts` and
+  `agent_test.ts`.
 - Performance is slow for 25-deep. Can we memoize more or faster, or do other optimizations?

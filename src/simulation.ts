@@ -1,6 +1,6 @@
-import { SimulationResult } from "./simulation_result.mts";
-import type { WorldState } from "./world_state.mts";
-import type { Agent } from "./agent.mts";
+import { SimulationResult } from "./simulation_result.ts";
+import type { WorldState } from "./world_state.ts";
+import type { Agent } from "./agent.ts";
 
 export interface Simulation<ActionType> {
   readonly possibleActions: Array<ActionType>;
