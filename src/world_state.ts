@@ -73,6 +73,14 @@ export class WorldState {
     return this.#agentRewardFunction;
   }
 
+  get buttonJustPressed(): boolean {
+    // As noted in `#figureOutButtonPressedForSuccessor()`, fractional lobbying power makes this
+    // calculation slightly complex. If the planned button press step is step 6.1, then the button
+    // is pressed at the end of step 7, and so only in step 8 should we return true for
+    // `buttonJustPressed`.
+    return Math.ceil(this.#plannedButtonPressStep.valueOf()) + 1 === this.#step;
+  }
+
   successor(
     {
       petrolCarsDelta = 0,
@@ -85,6 +93,9 @@ export class WorldState {
       step: this.#step + 1,
       petrolCars: this.#petrolCars + petrolCarsDelta,
       electricCars: this.#electricCars + electricCarsDelta,
+      // It's important that we not allow modifying the planned button press step when the button is
+      // already pressed. Although you might think it doesn't matter, it would impact the
+      // calculation of `buttonJustPressed` as we've written it.
       plannedButtonPressStep: this.#buttonPressed
         ? this.#plannedButtonPressStep
         : this.#plannedButtonPressStep.add(plannedButtonPressStepAttemptedDelta),

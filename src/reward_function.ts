@@ -44,7 +44,7 @@ export function createRewardFunction(init: RewardFunctionInit = {}): RewardFunct
 
   const rewardFunction = (previousWorld: WorldState, newWorld: WorldState): number => {
     if (previousWorld.buttonPressed) {
-      if (previousWorld.plannedButtonPressStep + 1 === previousWorld.step) {
+      if (previousWorld.buttonJustPressed) {
         return rewardFunctionAfterPress(previousWorld, newWorld) + f(previousWorld);
       } else {
         return rewardFunctionAfterPress(previousWorld, newWorld);
