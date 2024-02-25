@@ -4,8 +4,8 @@ export type RewardFunction = {
   hashForMemoizer(): string;
   (previousWorld: WorldState, newWorld: WorldState): number;
 };
-export type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
 export type CorrectionFunctionF = (previousWorld: WorldState) => number;
+export type CorrectionFunctionG = (previousWorld: WorldState, newWorld: WorldState) => number;
 
 export interface RewardFunctionInit {
   f?: CorrectionFunctionF;
