@@ -38,7 +38,7 @@ export class BasicSimulation extends SimulationBase<BasicAction>
           1,
           previousWorld.successor({
             petrolCarsDelta: 9,
-            plannedButtonPressStepDelta: -this.#lobbyingPower,
+            plannedButtonPressStepAttemptedDelta: -this.#lobbyingPower,
           }),
         ]];
       case BasicAction.Build9PetrolCarsAndLobbyForLaterPress:
@@ -46,7 +46,7 @@ export class BasicSimulation extends SimulationBase<BasicAction>
           1,
           previousWorld.successor({
             petrolCarsDelta: 9,
-            plannedButtonPressStepDelta: this.#lobbyingPower,
+            plannedButtonPressStepAttemptedDelta: this.#lobbyingPower,
           }),
         ]];
       case BasicAction.Build10ElectricCars:

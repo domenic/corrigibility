@@ -18,7 +18,7 @@ export interface WorldStateInitialInit {
 export interface WorldStateSuccessorInit {
   petrolCarsDelta?: number;
   electricCarsDelta?: number;
-  plannedButtonPressStepDelta?: number;
+  plannedButtonPressStepAttemptedDelta?: number;
   newAgentRewardFunction?: RewardFunction;
 }
 
@@ -77,7 +77,7 @@ export class WorldState {
     {
       petrolCarsDelta = 0,
       electricCarsDelta = 0,
-      plannedButtonPressStepDelta = 0,
+      plannedButtonPressStepAttemptedDelta = 0,
       newAgentRewardFunction,
     }: WorldStateSuccessorInit = {},
   ): WorldState {
@@ -85,7 +85,9 @@ export class WorldState {
       step: this.#step + 1,
       petrolCars: this.#petrolCars + petrolCarsDelta,
       electricCars: this.#electricCars + electricCarsDelta,
-      plannedButtonPressStep: this.#plannedButtonPressStep.add(plannedButtonPressStepDelta),
+      plannedButtonPressStep: this.#buttonPressed
+        ? this.#plannedButtonPressStep
+        : this.#plannedButtonPressStep.add(plannedButtonPressStepAttemptedDelta),
       agentRewardFunction: newAgentRewardFunction ?? this.#agentRewardFunction,
     }, this.#buttonPressed));
   }

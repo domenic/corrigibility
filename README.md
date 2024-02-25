@@ -115,7 +115,8 @@ among others.
 ## TODO
 
 - Continue implementing more parts of the paper
-  - `02-figure4.ts` is not correct right now.
 - Add unit tests for changing-over-time reward functions in `world_state_test.ts` and
   `agent_test.ts`.
+- Add unit tests and/or clean up the infrastructure added to make figure 4 work.
+- Add TSDoc comments?
 - Performance is slow for 25-deep. Can we memoize more or faster, or do other optimizations?

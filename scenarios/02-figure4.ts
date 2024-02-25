@@ -1,8 +1,6 @@
 // Reproduces the results of figure 4 (page 11) in the paper: A version of the agent with the $f_c$ correction function
 // applied, with the basic simulation setup, and varying lobbying power. This shows how the agent refrains from taking
 // any lobbying actions, at least in this basic simulation.
-//
-// TODO: it's not working :(
 
 import { WorldState } from "../src/world_state.ts";
 import { PiStarAgent } from "../src/agent.ts";

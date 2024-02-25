@@ -41,7 +41,7 @@ describe("successor()", () => {
     const newWorld = oldWorld.successor({
       petrolCarsDelta: 1,
       electricCarsDelta: 2,
-      plannedButtonPressStepDelta: 3.2,
+      plannedButtonPressStepAttemptedDelta: 3.2,
     });
 
     assertEquals(newWorld.step, 2);
@@ -79,7 +79,7 @@ describe("successor()", () => {
 
     let newWorld = initialWorld;
     for (let s = 2; s <= 11; ++s) {
-      newWorld = newWorld.successor({ plannedButtonPressStepDelta: 0.8 });
+      newWorld = newWorld.successor({ plannedButtonPressStepAttemptedDelta: 0.8 });
     }
 
     assertEquals(newWorld.step, 11);
@@ -117,7 +117,7 @@ describe("successor()", () => {
       agentRewardFunction: createRewardFunction(),
     });
 
-    let newWorld = initialWorld.successor({ plannedButtonPressStepDelta: 0.1 });
+    let newWorld = initialWorld.successor({ plannedButtonPressStepAttemptedDelta: 0.1 });
     for (let s = 3; s <= 6; ++s) {
       newWorld = newWorld.successor();
     }
@@ -149,13 +149,13 @@ describe("successor()", () => {
     assertEquals(oldWorld.electricCars, 0);
     assertEquals(oldWorld.plannedButtonPressStep.valueOf(), 1);
 
-    const newWorld = oldWorld.successor({ plannedButtonPressStepDelta: 3 });
+    const newWorld = oldWorld.successor({ plannedButtonPressStepAttemptedDelta: 3 });
 
     assertEquals(newWorld.step, 3);
     assertEquals(newWorld.buttonPressed, true);
     assertEquals(newWorld.petrolCars, 0);
     assertEquals(newWorld.electricCars, 0);
-    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 4);
+    assertEquals(newWorld.plannedButtonPressStep.valueOf(), 1);
   });
 });
 
@@ -172,14 +172,14 @@ describe("hashForMemoizer()", () => {
     const agentRewardFunction = createRewardFunction();
     const world1 = WorldState.initial({ plannedButtonPressStep: 1, agentRewardFunction }).successor(
       {
-        plannedButtonPressStepDelta: 2,
+        plannedButtonPressStepAttemptedDelta: 2,
         petrolCarsDelta: 1,
         electricCarsDelta: 2,
       },
     );
     const world2 = WorldState.initial({ plannedButtonPressStep: 1, agentRewardFunction }).successor(
       {
-        plannedButtonPressStepDelta: 2,
+        plannedButtonPressStepAttemptedDelta: 2,
         petrolCarsDelta: 1,
         electricCarsDelta: 2,
       },
@@ -201,12 +201,12 @@ describe("hashForMemoizer()", () => {
     const agentRewardFunction = createRewardFunction();
     const world1 = WorldState
       .initial({ plannedButtonPressStep: 1, agentRewardFunction })
-      .successor({ plannedButtonPressStepDelta: 2 })
+      .successor({ plannedButtonPressStepAttemptedDelta: 2 })
       .successor();
     const world2 = WorldState
       .initial({ plannedButtonPressStep: 1, agentRewardFunction })
       .successor()
-      .successor({ plannedButtonPressStepDelta: 2 });
+      .successor({ plannedButtonPressStepAttemptedDelta: 2 });
 
     assertNotEquals(world1.hashForMemoizer(), world2.hashForMemoizer());
   });
