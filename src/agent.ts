@@ -59,7 +59,7 @@ export class PiStarAgent<ActionType> {
     let bestActionSoFar: ActionType | undefined;
     let bestValueSoFar = -Infinity;
     for (const action of this.#simulation.possibleActions) {
-      const successorWorlds = this.#simulation.successorWorldStates(world, action); // I think this is carrying forward the modified utility function, which is not correct?
+      const successorWorlds = this.#simulation.successorWorldStates(world, action);
       let valueForThisAction = 0;
       for (const [probability, successorWorld] of successorWorlds) {
         valueForThisAction += probability *

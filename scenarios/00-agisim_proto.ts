@@ -1,6 +1,9 @@
 // Attempts to reproduce the results of
 // https://github.com/kholtman/agisim/blob/d82d04ed25c09b0c491be95863216cd3149d51d8/agisim_proto.awk.
-// As noted in the README, the result differences for 0.4 lobbyingPower: this version is more correct.
+//
+// As noted in the README, the result differences for 0.4 lobbyingPower: this version is more
+// correct.
+//
 // This is a non-corrigible version of the agent, with the basic simulation setup, and varying
 // lobbying power.
 
