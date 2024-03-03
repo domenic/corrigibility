@@ -10,6 +10,7 @@ import {
   rewardFunctionAfterPress,
   rewardFunctionBeforePress,
 } from "../src/reward_function.ts";
+import { simResultOutput } from "./utils.ts";
 
 const lobbyingPowers = [
   0.2,
@@ -19,15 +20,25 @@ const lobbyingPowers = [
   5.0,
 ];
 
+console.log("π^∗ f_0 g_0 agent:");
 for (const lobbyingPower of lobbyingPowers) {
-  const sim = new BasicSimulation({
-    lobbyingPower,
-    totalSteps: 25,
+  const sim = new BasicSimulation({ lobbyingPower, totalSteps: 25 });
+  const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.9 });
+
+  const startingWorld = WorldState.initial({
+    plannedButtonPressStep: 6,
+    agentRewardFunction: createRewardFunction(),
   });
 
-  const agent = new PiStarAgent(sim, {
-    timeDiscountFactor: 0.9,
-  });
+  const simResult = sim.run(startingWorld, agent);
+  console.log(simResultOutput(lobbyingPower, sim, simResult));
+}
+
+console.log();
+console.log("π∗ f_c g_0 agent:");
+for (const lobbyingPower of lobbyingPowers) {
+  const sim = new BasicSimulation({ lobbyingPower, totalSteps: 25 });
+  const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.9 });
 
   const startingWorld = WorldState.initial({
     plannedButtonPressStep: 6,
@@ -46,8 +57,5 @@ for (const lobbyingPower of lobbyingPowers) {
   });
 
   const simResult = sim.run(startingWorld, agent);
-  console.log(
-    lobbyingPower.toFixed(1) + "  |  " +
-      simResult.trace().padEnd(sim.totalSteps + 1),
-  );
+  console.log(simResultOutput(lobbyingPower, sim, simResult));
 }
