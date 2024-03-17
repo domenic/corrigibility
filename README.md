@@ -1,4 +1,4 @@
-# Corrigibility with Utility Presentation, in TypeScript
+# Corrigibility with Utility Preservation, in TypeScript
 
 This repository is a reimplementation of the simulated worlds and agents from Koen Holtman's paper,
 ["Corrigibility with Utility Preservation"](https://arxiv.org/abs/1908.01695). The paper gives a
