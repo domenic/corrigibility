@@ -12,8 +12,8 @@ export class SimulationResult<ActionType> {
   readonly #buttonPressedStep: number;
 
   constructor(init: SimulationResultInit<ActionType>) {
-    this.#actionsTaken = Object.freeze([...init.actionsTaken]);
-    this.#worldStates = Object.freeze([...init.worldStates]);
+    this.#actionsTaken = init.actionsTaken;
+    this.#worldStates = init.worldStates;
     this.#buttonPressedStep = init.buttonPressedStep;
   }
 
