@@ -30,10 +30,17 @@ as
 deno run scenarios/01-figure2.ts
 ```
 
-To run the unit tests, run
+To run the unit tests, use
 
 ```bash
 deno test
+```
+
+To run the integration tests which check the output of all scenarios against the snapshots stored in
+`test/scenario_snapshots/`, use
+
+```bash
+deno task test:scenarios
 ```
 
 ## Implementation notes
