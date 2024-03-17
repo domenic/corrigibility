@@ -1,10 +1,16 @@
 {
   "imports": {
     "assert": "https://deno.land/std@0.217.0/assert/mod.ts",
-    "testing/": "https://deno.land/std@0.217.0/testing/",
-    "bigdenary": "https://deno.land/x/bigdenary@1.0.0/mod.ts"
+    "bigdenary": "https://deno.land/x/bigdenary@1.0.0/mod.ts",
+    "cli/": "https://deno.land/std@0.217.0/cli/",
+    "path": "https://deno.land/std@0.217.0/path/mod.ts",
+    "testing/": "https://deno.land/std@0.217.0/testing/"
   },
   "fmt": {
     "lineWidth": 100
+  },
+  "tasks": {
+    "test:scenarios": "deno run --allow-read --allow-run=deno test/scenarios.ts",
+    "test:scenarios-reset": "deno run --allow-read=./test/scenario_snapshots/,./scenarios/ --allow-write=test/scenario_snapshots/ --allow-run=deno test/scenarios.ts --reset"
   }
 }
