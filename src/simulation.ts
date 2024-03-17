@@ -32,7 +32,7 @@ export abstract class SimulationBase<ActionType extends string> implements Simul
 
   constructor(actionEnum: ActionEnum<ActionType>, init: SimulationInitBase) {
     this.#totalSteps = init.totalSteps;
-    this.#possibleActions = Object.freeze(Object.values(actionEnum));
+    this.#possibleActions = Object.values(actionEnum);
   }
 
   get totalSteps(): number {
