@@ -1,4 +1,4 @@
-import { SimulationResult } from "./simulation_result.ts";
+import { SimulationResult, SimulationResultInit } from "./simulation_result.ts";
 import type { WorldState } from "./world_state.ts";
 import type { Agent } from "./agent.ts";
 
@@ -19,7 +19,7 @@ export interface Simulation<ActionType extends string> {
   ) => Array<[number, WorldState]>;
   pickSuccessorWorldState: (previousWorld: WorldState, action: ActionType) => WorldState;
 
-  run: (startingWorld: WorldState, agent: Agent<ActionType>) => SimulationResult<ActionType>;
+  run: (startingWorld: WorldState, agent: Agent<ActionType>) => Array<SimulationResult<ActionType>>;
 }
 
 export interface SimulationInitBase {
@@ -62,26 +62,36 @@ export abstract class SimulationBase<ActionType extends string> implements Simul
     throw new Error(`Probabilities summed to ${cumulativeProbability} instead of 1.`);
   }
 
-  run(startingWorld: WorldState, agent: Agent<ActionType>): SimulationResult<ActionType> {
-    const actionsTaken: Array<ActionType> = [];
-    const worldStates: Array<WorldState> = [startingWorld];
-    let buttonPressedStep = Infinity;
+  run(startingWorld: WorldState, agent: Agent<ActionType>): Array<SimulationResult<ActionType>> {
+    let worldlines: Array<SimulationResultInit<ActionType>> = [
+      {
+        actionsTaken: [],
+        worldStates: [startingWorld],
+        buttonPressedStep: Infinity,
+      },
+    ];
 
-    let world = startingWorld;
     for (let { step } = startingWorld; step <= this.#totalSteps; ++step) {
-      const action = agent.chooseAction(world);
+      const newWorldlines = [];
+      for (const worldline of worldlines) {
+        const world = worldline.worldStates[worldline.worldStates.length - 1];
+        const actions = agent.chooseActions(world);
 
-      const newWorld = this.pickSuccessorWorldState(world, action);
-
-      world = newWorld;
-
-      actionsTaken.push(action);
-      worldStates.push(world);
-      if (world.buttonPressed && buttonPressedStep === Infinity) {
-        buttonPressedStep = step;
+        for (const action of actions) {
+          const newWorld = this.pickSuccessorWorldState(world, action);
+          const continuedWorldline = {
+            actionsTaken: [...worldline.actionsTaken, action],
+            worldStates: [...worldline.worldStates, newWorld],
+            buttonPressedStep: newWorld.buttonPressed && worldline.buttonPressedStep === Infinity
+              ? step
+              : worldline.buttonPressedStep,
+          };
+          newWorldlines.push(continuedWorldline);
+        }
       }
+      worldlines = newWorldlines;
     }
 
-    return new SimulationResult({ actionsTaken, worldStates, buttonPressedStep });
+    return worldlines.map((resultInit) => new SimulationResult(resultInit));
   }
 }

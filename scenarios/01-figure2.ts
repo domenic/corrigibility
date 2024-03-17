@@ -2,10 +2,10 @@
 // with the basic simulation setup, and varying lobbying power.
 
 import { WorldState } from "../src/world_state.ts";
-import { PiStarAgent } from "../src/agent.ts";
+import { PiStarSAgent } from "../src/agent.ts";
 import { BasicSimulation } from "../src/simulation_basic.ts";
 import { createRewardFunction } from "../src/reward_function.ts";
-import { simResultOutput } from "./utils.ts";
+import { simOutput } from "./utils.ts";
 
 const startingWorld = WorldState.initial({
   plannedButtonPressStep: 6,
@@ -33,8 +33,8 @@ const lobbyingPowers = [
 
 for (const lobbyingPower of lobbyingPowers) {
   const sim = new BasicSimulation({ lobbyingPower, totalSteps: 25 });
-  const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.9 });
+  const agent = new PiStarSAgent(sim, { timeDiscountFactor: 0.9 });
 
-  const simResult = sim.run(startingWorld, agent);
-  console.log(simResultOutput(lobbyingPower, sim, simResult));
+  const simResults = sim.run(startingWorld, agent);
+  console.log(simOutput(lobbyingPower, sim, simResults));
 }

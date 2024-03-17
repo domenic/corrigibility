@@ -2,18 +2,20 @@ import { type WorldState } from "./world_state.ts";
 import { type Simulation } from "./simulation.ts";
 import { type RewardFunction } from "./reward_function.ts";
 
-export interface Agent<ActionType> {
-  chooseAction: (world: WorldState) => ActionType;
+export interface Agent<ActionType extends string> {
+  chooseActions: (world: WorldState) => Array<ActionType>;
 }
 
 export interface AgentInit {
   readonly timeDiscountFactor: number;
 }
 
-// Represents a full $\pi^*$ agent from the paper; see section 5.3.
+// Represents a full $\pi^*_s$ agent from the paper; see section 5.3 for $\pi^*$ and the end of
+// section 5.4 for the small extension to $\pi^*_s$.
+//
 // (Any sub-type of $\pi^*$ agent, e.g. $\pi^* f_c g_0$ agents from section 6, can be expressed by
 // changing the reward function in the world state of the general $\pi^*$ agent.)
-export class PiStarAgent<ActionType extends string> {
+export class PiStarSAgent<ActionType extends string> implements Agent<ActionType> {
   readonly #timeDiscountFactor: number;
   readonly #simulation: Simulation<ActionType>;
 
@@ -36,28 +38,35 @@ export class PiStarAgent<ActionType extends string> {
     return this.#valueFunctionCache.get(hash)!;
   }
 
-  // $V(r_c, r x)$, equation (5), in the paper
+  // $V_s(r_c, r x)$, at the end of section 5.4, in the paper
   #valueFunctionUnmemoized(rewardFunction: RewardFunction, world: WorldState): number {
     if (world.step > this.#simulation.totalSteps) {
       return 0;
     }
 
-    const action = this.chooseAction(world);
+    const actions = this.chooseActions(world);
 
-    const successorWorlds = this.#simulation.successorWorldStates(world, action);
-    let valueForThisAction = 0;
-    for (const [probability, successorWorld] of successorWorlds) {
-      valueForThisAction += probability *
-        (rewardFunction(world, successorWorld) +
-          this.#timeDiscountFactor * this.valueFunction(rewardFunction, successorWorld));
+    let leastValue = +Infinity;
+    for (const action of actions) {
+      const successorWorlds = this.#simulation.successorWorldStates(world, action);
+      let valueForThisAction = 0;
+      for (const [probability, successorWorld] of successorWorlds) {
+        valueForThisAction += probability *
+          (rewardFunction(world, successorWorld) +
+            this.#timeDiscountFactor * this.valueFunction(rewardFunction, successorWorld));
+      }
+
+      if (valueForThisAction < leastValue) {
+        leastValue = valueForThisAction;
+      }
     }
-    return valueForThisAction;
+    return leastValue;
   }
 
-  // $\pi^*(r x)$, equation (4), in the paper
-  chooseAction(world: WorldState): ActionType {
-    let bestActionSoFar: ActionType | undefined;
-    let bestValueSoFar = -Infinity;
+  // $\pi^*_s(r x)$, at the end of section 5.4, in the paper
+  chooseActions(world: WorldState): Array<ActionType> {
+    const bestActions: Array<ActionType> = [];
+    let mostValue = -Infinity;
     for (const action of this.#simulation.possibleActions) {
       const successorWorlds = this.#simulation.successorWorldStates(world, action);
       let valueForThisAction = 0;
@@ -68,16 +77,19 @@ export class PiStarAgent<ActionType extends string> {
               this.valueFunction(world.agentRewardFunction, successorWorld));
       }
 
-      // TODO consider noting indifference cases somehow
-      if (valueForThisAction > bestValueSoFar) {
-        bestActionSoFar = action;
-        bestValueSoFar = valueForThisAction;
+      if (valueForThisAction > mostValue) {
+        bestActions.length = 0;
+      }
+
+      if (valueForThisAction >= mostValue) {
+        bestActions.push(action);
+        mostValue = valueForThisAction;
       }
     }
 
-    if (bestActionSoFar === undefined) {
+    if (bestActions.length === 0) {
       throw new Error("No actions were possible in this simulation.");
     }
-    return bestActionSoFar;
+    return bestActions;
   }
 }
