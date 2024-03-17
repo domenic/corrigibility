@@ -1,13 +1,21 @@
 import { assertEquals, assertThrows } from "assert";
 import { assertSpyCall, assertSpyCalls, returnsNext, spy, stub } from "testing/mock.ts";
 import { beforeEach, describe, it } from "testing/bdd.ts";
-import { SimulationBase } from "../src/simulation.ts";
+import { SimulationBase, SimulationInitBase } from "../src/simulation.ts";
 import { WorldState } from "../src/world_state.ts";
 import { type Agent } from "../src/agent.ts";
 import { createRewardFunction } from "../src/reward_function.ts";
 
-class MockSimulation extends SimulationBase<string> {
-  possibleActions = ["A", "B"];
+const MockAction = {
+  ActionA: "A",
+  ActionB: "B",
+} as const;
+type MockAction = typeof MockAction[keyof typeof MockAction];
+
+class MockSimulation extends SimulationBase<MockAction> {
+  constructor(init: SimulationInitBase) {
+    super(MockAction, init);
+  }
 
   successorWorldStates(_worldState: WorldState, _action: string): Array<[number, WorldState]> {
     return [];
@@ -18,6 +26,11 @@ describe("SimulationBase constructor", () => {
   it("should reflect back totalSteps", () => {
     const sim = new MockSimulation({ totalSteps: 10 });
     assertEquals(sim.totalSteps, 10);
+  });
+
+  it("should set up possibleActions", () => {
+    const sim = new MockSimulation({ totalSteps: 10 });
+    assertEquals(sim.possibleActions, [MockAction.ActionA, MockAction.ActionB]);
   });
 });
 

@@ -13,7 +13,7 @@ export interface AgentInit {
 // Represents a full $\pi^*$ agent from the paper; see section 5.3.
 // (Any sub-type of $\pi^*$ agent, e.g. $\pi^* f_c g_0$ agents from section 6, can be expressed by
 // changing the reward function in the world state of the general $\pi^*$ agent.)
-export class PiStarAgent<ActionType> {
+export class PiStarAgent<ActionType extends string> {
   readonly #timeDiscountFactor: number;
   readonly #simulation: Simulation<ActionType>;
 

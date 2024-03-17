@@ -2,8 +2,12 @@ import { SimulationResult } from "./simulation_result.ts";
 import type { WorldState } from "./world_state.ts";
 import type { Agent } from "./agent.ts";
 
-export interface Simulation<ActionType> {
-  readonly possibleActions: Array<ActionType>;
+export type ActionEnum<ActionType> = {
+  [key: string]: ActionType;
+};
+
+export interface Simulation<ActionType extends string> {
+  readonly possibleActions: ReadonlyArray<ActionType>;
   readonly totalSteps: number;
 
   // A major departure from the paper's mathematical formalism is that we do not sum over all possible
@@ -22,17 +26,21 @@ export interface SimulationInitBase {
   totalSteps: number;
 }
 
-export abstract class SimulationBase<ActionType> implements Simulation<ActionType> {
+export abstract class SimulationBase<ActionType extends string> implements Simulation<ActionType> {
   #totalSteps: number;
+  #possibleActions: ReadonlyArray<ActionType>;
 
-  abstract readonly possibleActions: Array<ActionType>;
-
-  constructor(readonly init: SimulationInitBase) {
+  constructor(actionEnum: ActionEnum<ActionType>, init: SimulationInitBase) {
     this.#totalSteps = init.totalSteps;
+    this.#possibleActions = Object.freeze(Object.values(actionEnum));
   }
 
   get totalSteps(): number {
     return this.#totalSteps;
+  }
+
+  get possibleActions(): ReadonlyArray<ActionType> {
+    return this.#possibleActions;
   }
 
   abstract successorWorldStates(

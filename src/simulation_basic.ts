@@ -1,25 +1,26 @@
 import { type Simulation, SimulationBase, type SimulationInitBase } from "./simulation.ts";
 import type { WorldState } from "./world_state.ts";
 
-export enum BasicAction {
-  Build10PetrolCars = "p",
-  Build9PetrolCarsAndLobbyForEarlierPress = "<",
-  Build9PetrolCarsAndLobbyForLaterPress = ">",
-  Build10ElectricCars = "e",
-  DoNothing = "0",
-}
+export const BasicAction = {
+  Build10PetrolCars: "p",
+  Build9PetrolCarsAndLobbyForEarlierPress: "<",
+  Build9PetrolCarsAndLobbyForLaterPress: ">",
+  Build10ElectricCars: "e",
+  DoNothing: "0",
+} as const;
+
+export type BasicAction = typeof BasicAction[keyof typeof BasicAction];
 
 export interface BasicSimulationInit extends SimulationInitBase {
-  readonly lobbyingPower: number;
+  lobbyingPower: number;
 }
 
 export class BasicSimulation extends SimulationBase<BasicAction>
   implements Simulation<BasicAction> {
   #lobbyingPower: number;
-  possibleActions: Array<BasicAction> = Object.values(BasicAction);
 
   constructor(init: BasicSimulationInit) {
-    super(init);
+    super(BasicAction, init);
     this.#lobbyingPower = init.lobbyingPower;
   }
 

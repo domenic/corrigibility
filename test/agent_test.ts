@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "assert";
+import { assertEquals } from "assert";
 import { beforeEach, describe, it } from "testing/bdd.ts";
 import { PiStarAgent } from "../src/agent.ts";
 import { WorldState } from "../src/world_state.ts";
@@ -113,16 +113,6 @@ describe("PiStarXAgent chooseAction()", () => {
   beforeEach(() => {
     sim = new BasicSimulation({ totalSteps: 3, lobbyingPower: 0 });
     agent = new PiStarAgent(sim, { timeDiscountFactor: 0.5 });
-  });
-
-  it("throws if the simulation doesn't allow any actions", () => {
-    const initialWorld = WorldState.initial({
-      plannedButtonPressStep: 10,
-      agentRewardFunction: createRewardFunction(),
-    });
-
-    sim.possibleActions = [];
-    assertThrows(() => agent.chooseAction(initialWorld));
   });
 
   it("builds 10 petrol cars when that's the best action", () => {
