@@ -127,7 +127,7 @@ describe("SimulationBase pickSuccessorWorldState()", () => {
   });
 });
 
-describe("SimulationBase run()", () => {
+describe("SimulationBase run(), single worldline results", () => {
   let sim: SimulationBase<string>, agent: Agent<string>;
   beforeEach(() => {
     sim = new MockSimulation({ totalSteps: 10 });
@@ -136,11 +136,11 @@ describe("SimulationBase run()", () => {
     };
 
     agent = {
-      chooseAction(worldState: WorldState) {
+      chooseActions(worldState: WorldState) {
         if (worldState.step <= 5) {
-          return "A";
+          return ["A"];
         }
-        return "B";
+        return ["B"];
       },
     };
   });
@@ -151,7 +151,10 @@ describe("SimulationBase run()", () => {
       agentRewardFunction: createRewardFunction(),
     });
 
-    const result = sim.run(startingWorld, agent);
+    const results = sim.run(startingWorld, agent);
+    assertEquals(results.length, 1);
+    const result = results[0];
+
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
     assertEquals(result.buttonPressedStep, Infinity);
 
@@ -172,7 +175,10 @@ describe("SimulationBase run()", () => {
       agentRewardFunction: createRewardFunction(),
     });
 
-    const result = sim.run(startingWorld, agent);
+    const results = sim.run(startingWorld, agent);
+    assertEquals(results.length, 1);
+    const result = results[0];
+
     assertEquals(result.actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
     assertEquals(result.buttonPressedStep, 3);
 
@@ -184,6 +190,86 @@ describe("SimulationBase run()", () => {
       assertEquals(worldState.plannedButtonPressStep, 3);
       assertEquals(worldState.buttonPressed, step > 3);
       ++step;
+    }
+  });
+});
+
+describe("SimulationBase run(), multiple worldline results", () => {
+  let sim: SimulationBase<string>, agent: Agent<string>;
+  beforeEach(() => {
+    sim = new MockSimulation({ totalSteps: 10 });
+    sim.successorWorldStates = (previousWorld: WorldState) => {
+      return [[1, previousWorld.successor({ petrolCarsDelta: 1 })]];
+    };
+
+    agent = {
+      chooseActions(worldState: WorldState) {
+        if (worldState.step <= 5) {
+          return ["A"];
+        }
+        if (worldState.step >= 9) {
+          return ["B", "C"];
+        }
+        return ["B"];
+      },
+    };
+  });
+
+  it("should run the simulation (button never pressed)", () => {
+    const startingWorld = WorldState.initial({
+      plannedButtonPressStep: 11,
+      agentRewardFunction: createRewardFunction(),
+    });
+
+    const results = sim.run(startingWorld, agent);
+    assertEquals(results.length, 4);
+
+    assertEquals(results[0].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
+    assertEquals(results[1].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "C"]);
+    assertEquals(results[2].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "C", "B"]);
+    assertEquals(results[3].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "C", "C"]);
+
+    for (const result of results) {
+      assertEquals(result.buttonPressedStep, Infinity);
+
+      let step = 1;
+      for (const worldState of result.worldStates) {
+        assertEquals(worldState.step, step);
+        assertEquals(worldState.petrolCars, step - 1);
+        assertEquals(worldState.electricCars, 0);
+        assertEquals(worldState.plannedButtonPressStep, 11);
+        assertEquals(worldState.buttonPressed, false);
+        ++step;
+      }
+    }
+  });
+
+  it("should run the simulation (button pressed)", () => {
+    const startingWorld = WorldState.initial({
+      plannedButtonPressStep: 3,
+      agentRewardFunction: createRewardFunction(),
+    });
+
+    const results = sim.run(startingWorld, agent);
+    assertEquals(results.length, 4);
+
+    assertEquals(results[0].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "B"]);
+    assertEquals(results[1].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "B", "C"]);
+    assertEquals(results[2].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "C", "B"]);
+    assertEquals(results[3].actionsTaken, ["A", "A", "A", "A", "A", "B", "B", "B", "C", "C"]);
+
+    for (const result of results) {
+      assertEquals(result.buttonPressedStep, 3);
+
+      let step = 1;
+      for (const worldState of result.worldStates) {
+        assertEquals(worldState.step, step);
+        assertEquals(worldState.petrolCars, step - 1);
+        assertEquals(worldState.electricCars, 0);
+        assertEquals(worldState.plannedButtonPressStep, 3);
+        assertEquals(worldState.buttonPressed, step > 3);
+        ++step;
+      }
     }
   });
 });

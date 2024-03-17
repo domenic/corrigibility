@@ -3,14 +3,14 @@
 // shows how the agent refrains from taking any lobbying actions, at least in this basic simulation.
 
 import { WorldState } from "../src/world_state.ts";
-import { PiStarAgent } from "../src/agent.ts";
+import { PiStarSAgent } from "../src/agent.ts";
 import { BasicSimulation } from "../src/simulation_basic.ts";
 import {
   createRewardFunction,
   rewardFunctionAfterPress,
   rewardFunctionBeforePress,
 } from "../src/reward_function.ts";
-import { simResultOutput } from "./utils.ts";
+import { simOutput } from "./utils.ts";
 
 const lobbyingPowers = [
   0.2,
@@ -23,7 +23,7 @@ const lobbyingPowers = [
 console.log("π^∗ f_0 g_0 agent:");
 for (const lobbyingPower of lobbyingPowers) {
   const sim = new BasicSimulation({ lobbyingPower, totalSteps: 25 });
-  const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.9 });
+  const agent = new PiStarSAgent(sim, { timeDiscountFactor: 0.9 });
 
   const startingWorld = WorldState.initial({
     plannedButtonPressStep: 6,
@@ -31,14 +31,14 @@ for (const lobbyingPower of lobbyingPowers) {
   });
 
   const simResult = sim.run(startingWorld, agent);
-  console.log(simResultOutput(lobbyingPower, sim, simResult));
+  console.log(simOutput(lobbyingPower, sim, simResult));
 }
 
 console.log();
 console.log("π∗ f_c g_0 agent:");
 for (const lobbyingPower of lobbyingPowers) {
   const sim = new BasicSimulation({ lobbyingPower, totalSteps: 25 });
-  const agent = new PiStarAgent(sim, { timeDiscountFactor: 0.9 });
+  const agent = new PiStarSAgent(sim, { timeDiscountFactor: 0.9 });
 
   const startingWorld = WorldState.initial({
     plannedButtonPressStep: 6,
@@ -56,6 +56,6 @@ for (const lobbyingPower of lobbyingPowers) {
     }),
   });
 
-  const simResult = sim.run(startingWorld, agent);
-  console.log(simResultOutput(lobbyingPower, sim, simResult));
+  const simResults = sim.run(startingWorld, agent);
+  console.log(simOutput(lobbyingPower, sim, simResults));
 }
